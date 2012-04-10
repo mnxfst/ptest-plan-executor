@@ -20,10 +20,12 @@
 package com.mnxfst.testing.server.handler.planexec;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.kahadb.util.ByteArrayInputStream;
 import org.apache.log4j.Logger;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
@@ -42,6 +44,9 @@ import com.mnxfst.testing.server.PTestServerResponseBuilder;
 import com.mnxfst.testing.server.cfg.PTestServerConfiguration;
 import com.mnxfst.testing.server.exception.ContextInitializationFailedException;
 import com.mnxfst.testing.server.exception.RequestProcessingFailedException;
+import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlan;
+import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlanBuilder;
+import com.mnxfst.testing.server.handler.planexec.exception.InvalidTestPlanConfigurationException;
 
 /**
  * Provides a context handler implementation for processing incoming requests regarding the execution of test plans
@@ -85,6 +90,7 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 	public static final String ERROR_CODE_RECURRENCE_TYPE_MISSING_OR_INVALID = "recurrence_type_missing_or_invalid"; 
 	public static final String ERROR_CODE_TESTPLAN_MISSING = "testplan_missing"; 
 	public static final String ERROR_CODE_TESTPLAN_PROCESSING_ERROR = "testplan_processing_error";
+	public static final String ERROR_CODE_TESTPLAN_PARSING_FAILED = "testplan_parsing_failed";
 	public static final String ERROR_CODE_RESULT_ID_MISSING = "result_identifier_missing";
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,6 +203,20 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 			
 			sendResponse(PTestServerResponseBuilder.buildErrorResponse(hostname, port, errorMessages), keepAlive, event);
 		} else {
+
+			Map<String, String> errorMessages = new HashMap<String, String>();
+			
+			try {
+				PTestPlan pTestPlanInstance = PTestPlanBuilder.build(new ByteArrayInputStream(testPlan.getBytes("UTF-8")));
+			} catch (UnsupportedEncodingException e) {
+				errorMessages.put(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan. Error: " + e.getMessage());
+			} catch (InvalidTestPlanConfigurationException e) {
+				errorMessages.put(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan. Error: " + e.getMessage());
+			}
+			
+			if(errorMessages != null && !errorMessages.isEmpty()) {
+				sendResponse(PTestServerResponseBuilder.buildErrorResponse(hostname, port, errorMessages), keepAlive, event);
+			}
 			
 		}
 		

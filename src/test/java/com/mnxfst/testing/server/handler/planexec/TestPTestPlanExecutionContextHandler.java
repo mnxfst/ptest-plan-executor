@@ -19,11 +19,14 @@
 
 package com.mnxfst.testing.server.handler.planexec;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.CharSet;
 import org.apache.http.HttpStatus;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
@@ -37,6 +40,11 @@ import com.mnxfst.testing.server.PTestServerResponseBuilder;
 import com.mnxfst.testing.server.cfg.PTestServerConfiguration;
 import com.mnxfst.testing.server.exception.ContextInitializationFailedException;
 import com.mnxfst.testing.server.exception.RequestProcessingFailedException;
+import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlan;
+import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlanActivitySettings;
+import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlanBuilder;
+import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlanConfigurationOption;
+import com.mnxfst.testing.server.handler.planexec.exception.InvalidTestPlanConfigurationException;
 
 /**
  * Test case for {@link PTestPlanExecutionContextHandler}
@@ -419,6 +427,149 @@ public class TestPTestPlanExecutionContextHandler {
 		errorMessages.put(PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_MISSING, "Missing required testplan");
 		String expectedResponse = PTestServerResponseBuilder.buildErrorResponse("localhost", 8080, errorMessages);
 		Assert.assertEquals("The response must be equal to the expected string", expectedResponse.trim(), contents.trim());
+	}
+
+	@Test
+	public void testProcessRequestWithInvalidTestplan() throws RequestProcessingFailedException, ContextInitializationFailedException {
+
+		TestMessageEventChannelFuture testMessageEventChannelFuture = new TestMessageEventChannelFuture();
+		TestMessageEventChannel testMessageChannel = new TestMessageEventChannel(testMessageEventChannelFuture);
+		TestMessageEvent testEvent = new TestMessageEvent("dummy", testMessageChannel);
+
+		PTestPlanExecutionContextHandler handler = new PTestPlanExecutionContextHandler();
+		handler.initialize(new PTestServerConfiguration("localhost", 8080, 1));
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_THREADS_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_RECURRENCES_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_RECURRENCE_TYPE_PARAM, PTestPlanRecurrenceType.TIMES.toString(), params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_TESTPLAN_PARAM, "no such testplan", params);
+		handler.processRequest(new DefaultHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, "/"), params, false, testEvent);
+		
+		Assert.assertNotNull("The message contained within the channel future must not be null", testMessageEventChannelFuture.getMessage());
+		DefaultHttpResponse response = (DefaultHttpResponse)testMessageEventChannelFuture.getMessage();		
+		Assert.assertEquals("The status must be 200", HttpStatus.SC_OK, response.getStatus().getCode());
+		
+		ChannelBuffer buf = response.getContent();
+		Assert.assertNotNull("The buffer must not be null", buf);
+		String contents = new String(buf.array());
+		Assert.assertNotNull("The contents must not be null", contents);
+		Assert.assertFalse("The contents must not be empty", contents.isEmpty());
+		Assert.assertTrue("The response must contain the error key " + PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED, contents.indexOf(PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED) != -1);
+	}
+
+	@Test
+	public void testProcessRequestWithTestplanHavingEmptyXML() throws RequestProcessingFailedException, ContextInitializationFailedException {
+
+		TestMessageEventChannelFuture testMessageEventChannelFuture = new TestMessageEventChannelFuture();
+		TestMessageEventChannel testMessageChannel = new TestMessageEventChannel(testMessageEventChannelFuture);
+		TestMessageEvent testEvent = new TestMessageEvent("dummy", testMessageChannel);
+
+		PTestPlanExecutionContextHandler handler = new PTestPlanExecutionContextHandler();
+		handler.initialize(new PTestServerConfiguration("localhost", 8080, 1));
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_THREADS_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_RECURRENCES_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_RECURRENCE_TYPE_PARAM, PTestPlanRecurrenceType.TIMES.toString(), params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_TESTPLAN_PARAM, "<?xml version=\"1.0\" ?>", params);
+		handler.processRequest(new DefaultHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, "/"), params, false, testEvent);
+		
+		Assert.assertNotNull("The message contained within the channel future must not be null", testMessageEventChannelFuture.getMessage());
+		DefaultHttpResponse response = (DefaultHttpResponse)testMessageEventChannelFuture.getMessage();		
+		Assert.assertEquals("The status must be 200", HttpStatus.SC_OK, response.getStatus().getCode());
+		
+		ChannelBuffer buf = response.getContent();
+		Assert.assertNotNull("The buffer must not be null", buf);
+		String contents = new String(buf.array());
+		Assert.assertNotNull("The contents must not be null", contents);
+		Assert.assertFalse("The contents must not be empty", contents.isEmpty());
+		Assert.assertTrue("The response must contain the error key " + PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED, contents.indexOf(PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED) != -1);
+	}
+
+	@Test
+	public void testProcessRequestWithTestplanHavingEmptyTestplanXMLNode() throws RequestProcessingFailedException, ContextInitializationFailedException, InvalidTestPlanConfigurationException {
+
+		TestMessageEventChannelFuture testMessageEventChannelFuture = new TestMessageEventChannelFuture();
+		TestMessageEventChannel testMessageChannel = new TestMessageEventChannel(testMessageEventChannelFuture);
+		TestMessageEvent testEvent = new TestMessageEvent("dummy", testMessageChannel);
+
+		String xml = "<?xml version=\"1.0\" ?><ptestplan/>";
+		
+		PTestPlanExecutionContextHandler handler = new PTestPlanExecutionContextHandler();
+		handler.initialize(new PTestServerConfiguration("localhost", 8080, 1));
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_THREADS_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_RECURRENCES_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_RECURRENCE_TYPE_PARAM, PTestPlanRecurrenceType.TIMES.toString(), params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_TESTPLAN_PARAM, xml, params);
+		handler.processRequest(new DefaultHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, "/"), params, false, testEvent);
+		
+		Assert.assertNotNull("The message contained within the channel future must not be null", testMessageEventChannelFuture.getMessage());
+		DefaultHttpResponse response = (DefaultHttpResponse)testMessageEventChannelFuture.getMessage();		
+		Assert.assertEquals("The status must be 200", HttpStatus.SC_OK, response.getStatus().getCode());
+		
+		ChannelBuffer buf = response.getContent();
+		Assert.assertNotNull("The buffer must not be null", buf);
+		String contents = new String(buf.array());
+		Assert.assertNotNull("The contents must not be null", contents);
+		Assert.assertFalse("The contents must not be empty", contents.isEmpty());
+		Assert.assertTrue("The response must contain the error key " + PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED, contents.indexOf(PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED) != -1);
+	}
+
+	@Test
+	public void testProcessRequestWithTestplanHavingInvalidSettings() throws RequestProcessingFailedException, ContextInitializationFailedException, InvalidTestPlanConfigurationException {
+
+		TestMessageEventChannelFuture testMessageEventChannelFuture = new TestMessageEventChannelFuture();
+		TestMessageEventChannel testMessageChannel = new TestMessageEventChannel(testMessageEventChannelFuture);
+		TestMessageEvent testEvent = new TestMessageEvent("dummy", testMessageChannel);
+
+		PTestPlan plan = new PTestPlan();
+		plan.setCreatedBy("mnxfst");
+		plan.setCreationDate(new Date());
+		plan.setDescription("test description");		
+		plan.setName("my-test-plan");
+		
+		PTestPlanConfigurationOption options = new PTestPlanConfigurationOption();
+		options.setId("id-1");
+		options.addOption("test-1", "value-1");
+		options.addOption("test-2", "value-2");		
+		plan.addGlobalCfgOption(options);
+		
+		options = new PTestPlanConfigurationOption();
+		options.setId("id-2");
+		options.addOption("test-3", "value-3");
+		options.addOption("test-4", "value-4");		
+		plan.addGlobalCfgOption(options);
+		
+		options = new PTestPlanConfigurationOption();
+		options.setId("activity-1");
+		options.addOption("set-1", "val-1");
+		PTestPlanActivitySettings activityOpt = new PTestPlanActivitySettings();
+		activityOpt.addConfigOption(options);
+		activityOpt.setClazz("test-class");
+		activityOpt.setDescription("test class description");
+		plan.addActivityConfigOption(activityOpt);
+
+		String xml = PTestPlanBuilder.export(plan);
+		
+		PTestPlanExecutionContextHandler handler = new PTestPlanExecutionContextHandler();
+		handler.initialize(new PTestServerConfiguration("localhost", 8080, 1));
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_THREADS_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_RECURRENCES_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_RECURRENCE_TYPE_PARAM, PTestPlanRecurrenceType.TIMES.toString(), params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_TESTPLAN_PARAM, xml, params);
+		handler.processRequest(new DefaultHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, "/"), params, false, testEvent);
+		
+		Assert.assertNotNull("The message contained within the channel future must not be null", testMessageEventChannelFuture.getMessage());
+		DefaultHttpResponse response = (DefaultHttpResponse)testMessageEventChannelFuture.getMessage();		
+		Assert.assertEquals("The status must be 200", HttpStatus.SC_OK, response.getStatus().getCode());
+		
+		ChannelBuffer buf = response.getContent();
+		Assert.assertNotNull("The buffer must not be null", buf);
+		String contents = new String(buf.array());
+		Assert.assertNotNull("The contents must not be null", contents);
+		Assert.assertFalse("The contents must not be empty", contents.isEmpty());
+		Assert.assertTrue("The response must contain the error key " + PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED, contents.indexOf(PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED) != -1);
 	}
 
 	/**

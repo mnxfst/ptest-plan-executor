@@ -52,8 +52,12 @@ public class PTestPlanBuilder {
 		if(inputStream == null)
 			throw new InvalidTestPlanConfigurationException("Missing required input stream containing a test plan");
 		
-		PTestPlan plan = (PTestPlan)xstream.fromXML(inputStream);
-		return plan;		
+		try {
+			PTestPlan plan = (PTestPlan)xstream.fromXML(inputStream);
+			return plan;
+		} catch(Exception e) {
+			throw new InvalidTestPlanConfigurationException("Failed to parse testplan from provided input stream. Error: " + e.getMessage());
+		}
 	}
 	
 	/**

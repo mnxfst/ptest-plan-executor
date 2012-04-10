@@ -73,7 +73,7 @@ public class TestPTestPlanBuilder {
 		Assert.assertEquals("The original xml and the xml of the recovered plan must be equal", xml, recoveredPlanXml);
 		// TODO write a sufficient equals method
 		
-		
+;		
 		
 		
 		
