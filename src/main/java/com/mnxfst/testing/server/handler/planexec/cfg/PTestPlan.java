@@ -22,7 +22,10 @@ package com.mnxfst.testing.server.handler.planexec.cfg;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamConverter;
@@ -118,5 +121,44 @@ public class PTestPlan implements Serializable {
 	public void setCreatedBy(String createdBy) {
 		this.createdBy = createdBy;
 	}
-	
+
+	public String toString() {
+		
+		ToStringBuilder builder = new ToStringBuilder(this);
+		builder.append("name", this.name);
+		builder.append("description", this.description);
+		builder.append("createdBy", this.createdBy);
+		builder.append("creationDate", this.creationDate);
+			
+		StringBuffer buf1 = new StringBuffer("[");
+		if(globalCfgOptions != null && !globalCfgOptions.isEmpty()) {
+			for(Iterator<PTestPlanConfigurationOption> globalOptIter = globalCfgOptions.iterator(); globalOptIter.hasNext();) {
+				PTestPlanConfigurationOption globalOpt = globalOptIter.next();
+				buf1.append("(");
+				if(globalOpt != null)
+					buf1.append(globalOpt.toString());
+				buf1.append(")");
+				if(globalOptIter.hasNext())
+					buf1.append(", ");
+			}
+		}
+		buf1.append("]");
+		builder.append("globalCfgOptions", buf1.toString());
+		
+		StringBuffer buf2 = new StringBuffer("[");
+		if(activities != null && !activities.isEmpty()) {
+			for(Iterator<PTestPlanActivitySettings> settingsIter = activities.iterator(); settingsIter.hasNext();) {
+				PTestPlanActivitySettings setting = settingsIter.next();
+				buf2.append("(");
+				if(setting != null)
+					buf2.append(setting.toString());
+				buf2.append(")");
+				if(settingsIter.hasNext())
+					buf2.append(", ");
+			}
+		}
+		buf2.append("]");
+		builder.append("activities", buf2.toString());
+		return builder.toString();		
+	}
 }

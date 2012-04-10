@@ -21,7 +21,10 @@ package com.mnxfst.testing.server.handler.planexec.cfg;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
@@ -79,5 +82,26 @@ public class PTestPlanConfigurationOption implements Serializable {
 		this.options = options;
 	}
 	
+	/** 
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		
+		ToStringBuilder builder = new ToStringBuilder(this);
+		builder.append("id", this.id);
+		
+		StringBuffer buf = new StringBuffer("[");
+		if(options != null && !options.isEmpty()) {
+			for(Iterator<String> keyIter = options.keySet().iterator(); keyIter.hasNext();) {
+				String key = keyIter.next();
+				buf.append("(").append(key).append(", ").append(options.get(key)).append(")");
+				if(keyIter.hasNext())
+					buf.append(", ");
+			}
+		}
+		buf.append("]");
+		builder.append("options", buf.toString());
+		return builder.toString();
+	}
 	
 }

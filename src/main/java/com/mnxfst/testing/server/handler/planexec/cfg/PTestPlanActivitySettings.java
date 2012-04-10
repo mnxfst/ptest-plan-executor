@@ -21,7 +21,10 @@ package com.mnxfst.testing.server.handler.planexec.cfg;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
@@ -126,5 +129,32 @@ public class PTestPlanActivitySettings implements Serializable {
 		this.configuration = configuration;
 	}
 	
+	/** 
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		ToStringBuilder builder = new ToStringBuilder(this);
+		builder.append("id", this.id);
+		builder.append("description", this.description);
+		builder.append("class", this.clazz);
+		builder.append("nextActivity", this.nextActivity);
+		
+		StringBuffer buf = new StringBuffer("[");
+		if(configuration != null && !configuration.isEmpty()) {				
+			for(Iterator<PTestPlanConfigurationOption> cfgIter = configuration.iterator(); cfgIter.hasNext();) {
+				PTestPlanConfigurationOption cfg = cfgIter.next();
+				buf.append("(");
+				if(cfg != null)
+					buf.append(cfg.toString());
+				buf.append(")");
+				if(cfgIter.hasNext())
+					buf.append(", ");
+				
+			}
+		}
+		buf.append("]");
+		builder.append("configuration", buf.toString());
+		return builder.toString();
+	}
 	
 }

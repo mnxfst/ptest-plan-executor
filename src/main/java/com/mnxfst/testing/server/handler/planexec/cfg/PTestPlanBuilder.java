@@ -19,6 +19,13 @@
 
 package com.mnxfst.testing.server.handler.planexec.cfg;
 
+import java.io.IOException;
+import java.io.InputStream;
+
+import com.mnxfst.testing.server.handler.planexec.exception.InvalidTestPlanConfigurationException;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.StaxDriver;
+
 /**
  * Test plan parser
  * @author mnxfst
@@ -26,6 +33,42 @@ package com.mnxfst.testing.server.handler.planexec.cfg;
  */
 public class PTestPlanBuilder {
 
+	private static XStream xstream = null;
 	
+	static {
+		xstream = new XStream(new StaxDriver());
+		xstream.autodetectAnnotations(true);
+	}
 	
+	/**
+	 * Builds a test plan from the contents of the provided input stream 
+	 * @param inputStream
+	 * @return
+	 * @throws IOException
+	 * @throws InvalidTestPlanConfigurationException
+	 */
+	public static PTestPlan build(InputStream inputStream) throws InvalidTestPlanConfigurationException {
+		
+		if(inputStream == null)
+			throw new InvalidTestPlanConfigurationException("Missing required input stream containing a test plan");
+		
+		PTestPlan plan = (PTestPlan)xstream.fromXML(inputStream);
+		return plan;		
+	}
+	
+	/**
+	 * Converts the provided test plan into its xml representation 
+	 * @param ptestPlan
+	 * @return
+	 * @throws IOException
+	 * @throws InvalidTestPlanConfigurationException
+	 */
+	public static String export(PTestPlan ptestPlan) throws InvalidTestPlanConfigurationException {
+		
+		if(ptestPlan == null)
+			throw new InvalidTestPlanConfigurationException("Missing required test plan");
+		
+		return xstream.toXML(ptestPlan);
+	}
+		
 }
