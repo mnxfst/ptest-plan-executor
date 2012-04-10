@@ -41,6 +41,7 @@ import com.mnxfst.testing.server.PTestServerContextRequestHandler;
 import com.mnxfst.testing.server.PTestServerResponseBuilder;
 import com.mnxfst.testing.server.cfg.PTestServerConfiguration;
 import com.mnxfst.testing.server.exception.ContextInitializationFailedException;
+import com.mnxfst.testing.server.exception.RequestProcessingFailedException;
 
 /**
  * Provides a context handler implementation for processing incoming requests regarding the execution of test plans
@@ -96,18 +97,40 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 	 */
 	public void initialize(PTestServerConfiguration properties) throws ContextInitializationFailedException {
 
+		// validate properties as such
+		if(properties == null) 
+			throw new ContextInitializationFailedException("Missing required configuration properties");
+		
+		// validate hostname
+		if(properties.getHostname() == null || properties.getHostname().isEmpty())
+			throw new ContextInitializationFailedException("Missing required hostname");
+		
+		// validate port
+		if(properties.getPort() <= 0)
+			throw new ContextInitializationFailedException("Missing required port");
+		
 		// fetch hostname and port from properties
-		if(properties != null) {
-			this.hostname = properties.getHostname();
-			this.port = properties.getPort();
-		}
+		this.hostname = properties.getHostname();
+		this.port = properties.getPort();
 		
 	}
 
 	/**
 	 * @see com.mnxfst.testing.server.PTestServerContextRequestHandler#processRequest(org.jboss.netty.handler.codec.http.HttpRequest, java.util.Map, boolean, org.jboss.netty.channel.MessageEvent)
 	 */
-	public void processRequest(HttpRequest httpRequest, Map<String, List<String>> requestParameters, boolean keepAlive, MessageEvent event) {
+	public void processRequest(HttpRequest httpRequest, Map<String, List<String>> requestParameters, boolean keepAlive, MessageEvent event) throws RequestProcessingFailedException {
+		
+		// validate request
+		if(httpRequest == null)
+			throw new RequestProcessingFailedException("Missing required http request");
+		
+		// validate request parameters
+		if(requestParameters == null)
+			throw new RequestProcessingFailedException("Missing required request parameter map");
+		
+		// validate event
+		if(event == null)
+			throw new RequestProcessingFailedException("Missing required message event");
 		
 		int errors = 0;		
 		
@@ -117,7 +140,7 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 		if(numOfThreads == null || numOfThreads.intValue() < 1) {
 			errors = errors + 1;
 			threadsValid = false;
-		}
+		}		
 		
 		// parse out and validate number of recurrences
 		boolean recurrencesValid = true;
@@ -125,7 +148,7 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 		if(numOfRecurrences == null || numOfRecurrences.intValue() < 1) {
 			errors = errors + 1;
 			recurrencesValid = false;
-		}
+		}		
 		
 		// parse out and validate the recurrence type
 		boolean recurrencesTypeValid = true;
@@ -139,7 +162,7 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 		boolean testPlanValid = true;
 		List<String> values = requestParameters.get(CONTEXT_HANDLER_TESTPLAN_PARAM);
 		String testPlan = (values != null && values.size() > 0 ? values.get(0): null);
-		if(testPlan == null || testPlan.isEmpty()) {
+		if(testPlan == null || testPlan.trim().isEmpty()) {
 			errors = errors + 1;
 			testPlanValid = false;
 		}
