@@ -19,14 +19,12 @@
 
 package com.mnxfst.testing.handler.exec;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.CharSet;
 import org.apache.http.HttpStatus;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
@@ -36,8 +34,6 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.mnxfst.testing.handler.exec.PTestPlanExecutionContextHandler;
-import com.mnxfst.testing.handler.exec.PTestPlanRecurrenceType;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlanActivitySettings;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlanBuilder;
