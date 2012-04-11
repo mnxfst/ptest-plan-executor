@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.http.HttpStatus;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -568,6 +569,69 @@ public class TestPTestPlanExecutionContextHandler {
 		Assert.assertNotNull("The contents must not be null", contents);
 		Assert.assertFalse("The contents must not be empty", contents.isEmpty());
 		Assert.assertTrue("The response must contain the error key " + PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED, contents.indexOf(PTestPlanExecutionContextHandler.ERROR_CODE_TESTPLAN_PARSING_FAILED) != -1);
+	}
+	@Test
+	public void testProcessRequestWithValidTestplan() throws RequestProcessingFailedException, ContextInitializationFailedException, InvalidConfigurationException {
+
+		TestMessageEventChannelFuture testMessageEventChannelFuture = new TestMessageEventChannelFuture();
+		TestMessageEventChannel testMessageChannel = new TestMessageEventChannel(testMessageEventChannelFuture);
+		TestMessageEvent testEvent = new TestMessageEvent("dummy", testMessageChannel);
+
+		PTestPlan plan = new PTestPlan();
+		plan.setCreatedBy("mnxfst");
+		plan.setCreationDate(new Date());
+		plan.setDescription("test description");		
+		plan.setName("my-test-plan");
+		
+		PTestPlanConfigurationOption options = new PTestPlanConfigurationOption();
+		options.setId("id-1");
+		options.addOption("test-1", "value-1");
+		options.addOption("test-2", "value-2");		
+		plan.addGlobalCfgOption(options);
+		
+		options = new PTestPlanConfigurationOption();
+		options.setId("activity-1");
+		options.addOption("set-1", "val-1");
+		PTestPlanActivitySettings activityOpt = new PTestPlanActivitySettings();
+		activityOpt.addConfigOption("set-1", "val-1");
+		activityOpt.setClazz(TestDummyActivity.class.getName());
+		activityOpt.setNextActivity("FINAL");
+		activityOpt.setId("FINAL");
+		activityOpt.setDescription("test class description");
+		plan.addActivityConfigOption(activityOpt);
+
+		String xml = PTestPlanBuilder.export(plan);
+		
+		PTestPlanExecutionContextHandler handler = new PTestPlanExecutionContextHandler();
+		handler.initialize(new PTestServerConfiguration("localhost", 8080, 1));
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_THREADS_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_NUM_OF_RECURRENCES_PARAM, "1", params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_RECURRENCE_TYPE_PARAM, PTestPlanRecurrenceType.TIMES.toString(), params);
+		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_TESTPLAN_PARAM, xml, params);
+		handler.processRequest(new DefaultHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, "/"), params, false, testEvent);
+		
+		Assert.assertNotNull("The message contained within the channel future must not be null", testMessageEventChannelFuture.getMessage());
+		DefaultHttpResponse response = (DefaultHttpResponse)testMessageEventChannelFuture.getMessage();		
+		Assert.assertEquals("The status must be 200", HttpStatus.SC_OK, response.getStatus().getCode());
+		
+		ChannelBuffer buf = response.getContent();
+		Assert.assertNotNull("The buffer must not be null", buf);
+		String contents = new String(buf.array());		
+		Assert.assertNotNull("The contents must not be null", contents);
+		Assert.assertFalse("The contents must not be empty", contents.isEmpty());
+		Assert.assertTrue("The response must contain a result identifier", contents.indexOf("resultIdentifier") != -1);
+		
+		Set<String> identifiers = handler.getResponseIdentifiers();
+		Assert.assertNotNull("The identifier set must not be null", identifiers);
+		Assert.assertFalse("The identifier set must not be empty", identifiers.isEmpty());
+		Assert.assertEquals("The identifier set must contain one element", 1, identifiers.size());
+		
+		String id = identifiers.iterator().next();
+		
+		
+		
+		
 	}
 
 	/**

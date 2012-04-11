@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -311,5 +312,11 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 		testPlanExecutionResultCache.put(identifier, result);
 	}
 	
+	protected PTestPlanExecutorResult getResponse(String identifier) {
+		return testPlanExecutionResultCache.get(identifier);
+	}
 	
+	protected Set<String> getResponseIdentifiers() {
+		return testPlanExecutionResultCache.keySet();
+	}
 }
