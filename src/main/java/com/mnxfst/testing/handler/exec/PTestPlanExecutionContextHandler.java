@@ -24,6 +24,10 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.kahadb.util.ByteArrayInputStream;
 import org.apache.log4j.Logger;
@@ -38,12 +42,12 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.util.CharsetUtil;
+import org.jboss.netty.util.internal.ConcurrentHashMap;
 
 import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlanBuilder;
 import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 import com.mnxfst.testing.server.PTestServerContextRequestHandler;
-import com.mnxfst.testing.server.PTestServerResponseBuilder;
 import com.mnxfst.testing.server.cfg.PTestServerConfiguration;
 import com.mnxfst.testing.server.exception.ContextInitializationFailedException;
 import com.mnxfst.testing.server.exception.RequestProcessingFailedException;
@@ -94,6 +98,9 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 	public static final String ERROR_CODE_RESULT_ID_MISSING = "result_identifier_missing";
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////
+	
+ 	private static ConcurrentMap<String, PTestPlanExecutorResult> testPlanExecutionResultCache = new ConcurrentHashMap<String, PTestPlanExecutorResult>();
+ 	private static ExecutorService testPlanExecutorService = Executors.newCachedThreadPool();
 	
 	private String hostname = null;
 	private int port = 0;
@@ -201,13 +208,15 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 				errorMessages.put(ERROR_CODE_TESTPLAN_MISSING, "Missing required testplan");
 			}
 			
-			sendResponse(PTestServerResponseBuilder.buildErrorResponse(hostname, port, errorMessages), keepAlive, event);
+			sendResponse(PTestPlanExecutionResponseBuilder.buildErrorResponse(hostname, port, errorMessages), keepAlive, event);
 		} else {
 
 			Map<String, String> errorMessages = new HashMap<String, String>();
+			UUID resultIdentifier = UUID.fromString(new com.eaio.uuid.UUID().toString());
 			
 			try {
-				PTestPlan pTestPlanInstance = PTestPlanBuilder.build(new ByteArrayInputStream(testPlan.getBytes("UTF-8")));
+				PTestPlan plan = PTestPlanBuilder.build(new ByteArrayInputStream(testPlan.getBytes("UTF-8")));
+				PTestPlanExecutor testPlanExecutor = new PTestPlanExecutor(plan, resultIdentifier.toString(), numOfRecurrences.intValue(), numOfRecurrences.intValue(), numOfThreads);
 			} catch (UnsupportedEncodingException e) {
 				errorMessages.put(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan. Error: " + e.getMessage());
 			} catch (InvalidConfigurationException e) {
@@ -215,13 +224,15 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 			}
 			
 			if(errorMessages != null && !errorMessages.isEmpty()) {
-				sendResponse(PTestServerResponseBuilder.buildErrorResponse(hostname, port, errorMessages), keepAlive, event);
+				sendResponse(PTestPlanExecutionResponseBuilder.buildErrorResponse(hostname, port, errorMessages), keepAlive, event);
+			} else {
+				sendResponse(PTestPlanExecutionResponseBuilder.buildTestExecutionStartedResponse(hostname, port, resultIdentifier.toString()), keepAlive, event);
 			}
 			
 		}
 		
 	}
-
+	
 	////////////////////////////////////////// REFACTOR TO PARENT CLASS IF NEEDED //////////////////////////////////////////
 	
 	/**
@@ -299,6 +310,9 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 			future.addListener(ChannelFutureListener.CLOSE);
 	}
 	
-
+	protected static void addResponse(String identifier, PTestPlanExecutorResult result) {
+		testPlanExecutionResultCache.put(identifier, result);
+	}
+	
 	
 }

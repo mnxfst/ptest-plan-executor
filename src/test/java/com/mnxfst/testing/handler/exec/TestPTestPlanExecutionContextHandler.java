@@ -542,7 +542,7 @@ public class TestPTestPlanExecutionContextHandler {
 		options.setId("activity-1");
 		options.addOption("set-1", "val-1");
 		PTestPlanActivitySettings activityOpt = new PTestPlanActivitySettings();
-		activityOpt.addConfigOption(options);
+		activityOpt.addConfigOption("set-1", "val-1");
 		activityOpt.setClazz("test-class");
 		activityOpt.setDescription("test class description");
 		plan.addActivityConfigOption(activityOpt);

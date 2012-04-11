@@ -20,16 +20,15 @@
 package com.mnxfst.testing.handler.exec.cfg;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamConverter;
-import com.thoughtworks.xstream.converters.collections.CollectionConverter;
+import com.thoughtworks.xstream.converters.collections.MapConverter;
 
 /**
  * Activity settings
@@ -49,14 +48,20 @@ public class PTestPlanActivitySettings implements Serializable {
 	private String clazz = null;
 	@XStreamAlias ("nextActivity")
 	private String nextActivity = null;
-	@XStreamConverter (CollectionConverter.class)
-	private List<PTestPlanConfigurationOption> configuration = new ArrayList<PTestPlanConfigurationOption>();
+	@XStreamAlias ( "configuration" )
+	private PTestPlanConfigurationOption configuration = new PTestPlanConfigurationOption();
+	@XStreamConverter (MapConverter.class)
+	private Map<String, String> exportVariables = new HashMap<String, String>();
 	
 	public PTestPlanActivitySettings() {		
 	}
 
-	public void addConfigOption(PTestPlanConfigurationOption option) {
-		configuration.add(option);
+	public void addConfigOption(String key, String value) {
+		configuration.addOption(key, value);
+	}
+	
+	public void addExportVariable(String internalName, String contextVariableName) {
+		this.exportVariables.put(internalName, contextVariableName);
 	}
 	
 	/**
@@ -118,17 +123,31 @@ public class PTestPlanActivitySettings implements Serializable {
 	/**
 	 * @return the configuration
 	 */
-	public List<PTestPlanConfigurationOption> getConfiguration() {
+	public PTestPlanConfigurationOption getConfiguration() {
 		return configuration;
 	}
 
 	/**
 	 * @param configuration the configuration to set
 	 */
-	public void setConfiguration(List<PTestPlanConfigurationOption> configuration) {
+	public void setConfiguration(PTestPlanConfigurationOption configuration) {
 		this.configuration = configuration;
 	}
 	
+	/**
+	 * @return the exportVariables
+	 */
+	public Map<String, String> getExportVariables() {
+		return exportVariables;
+	}
+
+	/**
+	 * @param exportVariables the exportVariables to set
+	 */
+	public void setExportVariables(Map<String, String> exportVariables) {
+		this.exportVariables = exportVariables;
+	}
+
 	/** 
 	 * @see java.lang.Object#toString()
 	 */
@@ -140,18 +159,18 @@ public class PTestPlanActivitySettings implements Serializable {
 		builder.append("nextActivity", this.nextActivity);
 		
 		StringBuffer buf = new StringBuffer("[");
-		if(configuration != null && !configuration.isEmpty()) {				
-			for(Iterator<PTestPlanConfigurationOption> cfgIter = configuration.iterator(); cfgIter.hasNext();) {
-				PTestPlanConfigurationOption cfg = cfgIter.next();
-				buf.append("(");
-				if(cfg != null)
-					buf.append(cfg.toString());
-				buf.append(")");
-				if(cfgIter.hasNext())
-					buf.append(", ");
-				
-			}
-		}
+//		if(configuration != null) {				
+//			for(Iterator<PTestPlanConfigurationOption> cfgIter = configuration.getOptions().keySet().iterator(); cfgIter.hasNext();) {
+//				PTestPlanConfigurationOption cfg = cfgIter.next();
+//				buf.append("(");
+//				if(cfg != null)
+//					buf.append(cfg.toString());
+//				buf.append(")");
+//				if(cfgIter.hasNext())
+//					buf.append(", ");
+//				
+//			}
+//		}
 		buf.append("]");
 		builder.append("configuration", buf.toString());
 		return builder.toString();

@@ -67,6 +67,35 @@ public class PTestPlan implements Serializable {
 	}
 	
 	/**
+	 * @return the globalCfgOptions
+	 */
+	public List<PTestPlanConfigurationOption> getGlobalCfgOptions() {
+		return globalCfgOptions;
+	}
+
+	/**
+	 * @param globalCfgOptions the globalCfgOptions to set
+	 */
+	public void setGlobalCfgOptions(
+			List<PTestPlanConfigurationOption> globalCfgOptions) {
+		this.globalCfgOptions = globalCfgOptions;
+	}
+
+	/**
+	 * @return the activities
+	 */
+	public List<PTestPlanActivitySettings> getActivities() {
+		return activities;
+	}
+
+	/**
+	 * @param activities the activities to set
+	 */
+	public void setActivities(List<PTestPlanActivitySettings> activities) {
+		this.activities = activities;
+	}
+
+	/**
 	 * @return the name
 	 */
 	public String getName() {

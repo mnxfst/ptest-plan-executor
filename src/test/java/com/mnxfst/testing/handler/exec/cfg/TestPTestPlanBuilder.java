@@ -59,13 +59,12 @@ public class TestPTestPlanBuilder {
 		options.addOption("test-4", "value-4");		
 		plan.addGlobalCfgOption(options);
 		
-		options = new PTestPlanConfigurationOption();
-		options.setId("activity-1");
-		options.addOption("set-1", "val-1");
 		PTestPlanActivitySettings activityOpt = new PTestPlanActivitySettings();
-		activityOpt.addConfigOption(options);
+		activityOpt.addConfigOption("set-1", "val-1");
+		activityOpt.addConfigOption("set-2", "val-2");
 		activityOpt.setClazz("test-class");
 		activityOpt.setDescription("test class description");
+		activityOpt.addExportVariable("testInternal", "junitSampleVar");
 		plan.addActivityConfigOption(activityOpt);
 
 		String xml = PTestPlanBuilder.export(plan);
@@ -76,9 +75,7 @@ public class TestPTestPlanBuilder {
 		String recoveredPlanXml = PTestPlanBuilder.export(recoveredPlan);
 		Assert.assertEquals("The original xml and the xml of the recovered plan must be equal", xml, recoveredPlanXml);
 		// TODO write a sufficient equals method
-		
-;		
-		
+		System.out.println(recoveredPlanXml);
 		
 		
 	}
