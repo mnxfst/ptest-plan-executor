@@ -30,7 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.kahadb.util.ByteArrayInputStream;
-import org.apache.log4j.Logger;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -59,8 +58,6 @@ import com.mnxfst.testing.server.exception.RequestProcessingFailedException;
  * @since 29.03.2012
  */
 public class PTestPlanExecutionContextHandler implements PTestServerContextRequestHandler {
-
-	private static final Logger logger = Logger.getLogger(PTestPlanExecutionContextHandler.class.getName());
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -216,7 +213,7 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 			
 			try {
 				PTestPlan plan = PTestPlanBuilder.build(new ByteArrayInputStream(testPlan.getBytes("UTF-8")));
-				PTestPlanExecutor testPlanExecutor = new PTestPlanExecutor(plan, resultIdentifier.toString(), numOfRecurrences.intValue(), numOfRecurrences.intValue(), numOfThreads);
+				testPlanExecutorService.execute(new PTestPlanExecutor(plan, resultIdentifier.toString(), numOfRecurrences.intValue(), numOfRecurrences.intValue(), numOfThreads));
 			} catch (UnsupportedEncodingException e) {
 				errorMessages.put(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan. Error: " + e.getMessage());
 			} catch (InvalidConfigurationException e) {
