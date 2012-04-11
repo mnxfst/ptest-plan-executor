@@ -17,24 +17,32 @@
  *
  */
 
-package com.mnxfst.testing.server.handler.planexec;
+package com.mnxfst.testing.handler.exec.exception;
 
-import java.io.Serializable;
+import com.mnxfst.testing.handler.exec.activity.PTestPlanActivity;
+
 
 /**
- * Names the recurrence type to use
+ * Thrown in case anything fails during {@link PTestPlanActivity} execution
  * @author mnxfst
- * @since 02.04.2012
+ * @since 11.04.2012
  */
-public enum PTestPlanRecurrenceType implements Serializable {
+public class ActivityExecutionFailedException extends Exception {
 
-	TIMES,
-	MILLIS,
-	SECONDS,
-	MINUTES,
-	HOURS,
-	DAYS,
-	INFINITE,
-	UNKNOWN
+	private static final long serialVersionUID = -5995590849221962901L;
 
+	public ActivityExecutionFailedException() {
+	}
+
+	public ActivityExecutionFailedException(String msg) {
+		super(msg);
+	}
+
+	public ActivityExecutionFailedException(Throwable cause) {
+		super(cause);
+	}
+
+	public ActivityExecutionFailedException(String msg, Throwable cause) {
+		super(msg, cause);
+	}
 }

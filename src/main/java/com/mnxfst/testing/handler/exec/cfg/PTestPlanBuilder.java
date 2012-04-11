@@ -17,12 +17,12 @@
  *
  */
 
-package com.mnxfst.testing.server.handler.planexec.cfg;
+package com.mnxfst.testing.handler.exec.cfg;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.mnxfst.testing.server.handler.planexec.exception.InvalidTestPlanConfigurationException;
+import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
 
@@ -45,18 +45,18 @@ public class PTestPlanBuilder {
 	 * @param inputStream
 	 * @return
 	 * @throws IOException
-	 * @throws InvalidTestPlanConfigurationException
+	 * @throws InvalidConfigurationException
 	 */
-	public static PTestPlan build(InputStream inputStream) throws InvalidTestPlanConfigurationException {
+	public static PTestPlan build(InputStream inputStream) throws InvalidConfigurationException {
 		
 		if(inputStream == null)
-			throw new InvalidTestPlanConfigurationException("Missing required input stream containing a test plan");
+			throw new InvalidConfigurationException("Missing required input stream containing a test plan");
 		
 		try {
 			PTestPlan plan = (PTestPlan)xstream.fromXML(inputStream);
 			return plan;
 		} catch(Exception e) {
-			throw new InvalidTestPlanConfigurationException("Failed to parse testplan from provided input stream. Error: " + e.getMessage());
+			throw new InvalidConfigurationException("Failed to parse testplan from provided input stream. Error: " + e.getMessage());
 		}
 	}
 	
@@ -65,12 +65,12 @@ public class PTestPlanBuilder {
 	 * @param ptestPlan
 	 * @return
 	 * @throws IOException
-	 * @throws InvalidTestPlanConfigurationException
+	 * @throws InvalidConfigurationException
 	 */
-	public static String export(PTestPlan ptestPlan) throws InvalidTestPlanConfigurationException {
+	public static String export(PTestPlan ptestPlan) throws InvalidConfigurationException {
 		
 		if(ptestPlan == null)
-			throw new InvalidTestPlanConfigurationException("Missing required test plan");
+			throw new InvalidConfigurationException("Missing required test plan");
 		
 		return xstream.toXML(ptestPlan);
 	}

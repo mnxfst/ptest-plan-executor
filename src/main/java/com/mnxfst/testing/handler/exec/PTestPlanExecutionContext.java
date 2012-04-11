@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.server.handler.planexec;
+package com.mnxfst.testing.handler.exec;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -25,7 +25,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 
-import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlan;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
 
 /**
  * Contains all required information for a single {@link PTestPlan} execution run. Since the context is being operated
@@ -53,13 +53,12 @@ public class PTestPlanExecutionContext implements Serializable {
 	/**
 	 * Names the current state or step within a test plan
 	 */
-	private String currentState = null;
+	private String currentActivityId = null;
 	
 	/**
-	 * Names the next state or step to execute within a test plan. This field must be set before reporting
-	 * back a successful operation step (carried out by any {@link SCAction}) to the {@link SCExecutionControllerOLD}.
+	 * Names the next state or step to execute within a test plan. 
 	 */
-	private String nextState = null;
+	private String nextActivityId = null;
 
 	/**
 	 * Timestamp of entity initialization
@@ -104,10 +103,10 @@ public class PTestPlanExecutionContext implements Serializable {
 		
 	public void cleanUp() {
 		this.runId = 0;
-		this.currentState = null;
+		this.currentActivityId = null;
 		this.finalTimestamp = 0;
 		this.initTimestamp = 0;
-		this.nextState = null;
+		this.nextActivityId = null;
 		this.contextVariables.clear();
 	}
 	
@@ -138,35 +137,35 @@ public class PTestPlanExecutionContext implements Serializable {
 	public void setContextVariables(Map<String, Serializable> contextVariables) {
 		this.contextVariables = contextVariables;
 	}
-
-	/**
-	 * @return the currentState
-	 */
-	public String getCurrentState() {
-		return currentState;
-	}
-
-	/**
-	 * @param currentState the currentState to set
-	 */
-	public void setCurrentState(String currentState) {
-		this.currentState = currentState;
-	}
-
-	/**
-	 * @return the nextState
-	 */
-	public String getNextState() {
-		return nextState;
-	}
-
-	/**
-	 * @param nextState the nextState to set
-	 */
-	public void setNextState(String nextState) {
-		this.nextState = nextState;
-	}
 	
+	/**
+	 * @return the currentActivityId
+	 */
+	public String getCurrentActivityId() {
+		return currentActivityId;
+	}
+
+	/**
+	 * @param currentActivityId the currentActivityId to set
+	 */
+	public void setCurrentActivityId(String currentActivityId) {
+		this.currentActivityId = currentActivityId;
+	}
+
+	/**
+	 * @return the nextActivityId
+	 */
+	public String getNextActivityId() {
+		return nextActivityId;
+	}
+
+	/**
+	 * @param nextActivityId the nextActivityId to set
+	 */
+	public void setNextActivityId(String nextActivityId) {
+		this.nextActivityId = nextActivityId;
+	}
+
 	/**
 	 * @return the initTimestamp
 	 */
@@ -217,8 +216,8 @@ public class PTestPlanExecutionContext implements Serializable {
 			.append("runId", this.runId)
 			.append("initTimestamp", this.initTimestamp)
 			.append("finalTimestamp", this.finalTimestamp)
-			.append("currentState", this.currentState)
-			.append("nextState", this.nextState)
+			.append("currentActivityId", this.currentActivityId)
+			.append("nextActivityId", this.nextActivityId)
 			.append("actionCalls", this.actionCalls)
 			.append("contextVariables", this.contextVariables).toString();
 	}

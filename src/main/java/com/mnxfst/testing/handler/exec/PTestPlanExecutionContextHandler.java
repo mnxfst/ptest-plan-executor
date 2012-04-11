@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.server.handler.planexec;
+package com.mnxfst.testing.handler.exec;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -39,14 +39,14 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.util.CharsetUtil;
 
+import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlanBuilder;
+import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 import com.mnxfst.testing.server.PTestServerContextRequestHandler;
 import com.mnxfst.testing.server.PTestServerResponseBuilder;
 import com.mnxfst.testing.server.cfg.PTestServerConfiguration;
 import com.mnxfst.testing.server.exception.ContextInitializationFailedException;
 import com.mnxfst.testing.server.exception.RequestProcessingFailedException;
-import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlan;
-import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlanBuilder;
-import com.mnxfst.testing.server.handler.planexec.exception.InvalidTestPlanConfigurationException;
 
 /**
  * Provides a context handler implementation for processing incoming requests regarding the execution of test plans
@@ -210,7 +210,7 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 				PTestPlan pTestPlanInstance = PTestPlanBuilder.build(new ByteArrayInputStream(testPlan.getBytes("UTF-8")));
 			} catch (UnsupportedEncodingException e) {
 				errorMessages.put(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan. Error: " + e.getMessage());
-			} catch (InvalidTestPlanConfigurationException e) {
+			} catch (InvalidConfigurationException e) {
 				errorMessages.put(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan. Error: " + e.getMessage());
 			}
 			

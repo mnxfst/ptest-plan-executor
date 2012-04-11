@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.server.handler.planexec.cfg;
+package com.mnxfst.testing.handler.exec.cfg;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.server.handler.planexec;
+package com.mnxfst.testing.handler.exec;
 
 import java.net.SocketAddress;
 

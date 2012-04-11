@@ -17,26 +17,29 @@
  *
  */
 
-package com.mnxfst.testing.server.handler.planexec.cfg;
+package com.mnxfst.testing.handler.exec.cfg;
 
 import java.util.Date;
 
+import org.apache.kahadb.util.ByteArrayInputStream;
+import org.junit.Assert;
 import org.junit.Test;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.StaxDriver;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlanActivitySettings;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlanBuilder;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlanConfigurationOption;
+import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 
 /**
- * Test cases for {@link PTestPlan
+ * Test case for {@link PTestPlanBuilder}
  * @author mnxfst
- * @since 02.04.2012
+ * @since 10.04.2012
  */
-public class TestPTestPlan {
+public class TestPTestPlanBuilder {
 
 	@Test
-	public void testExportXML() {
-		XStream xstream = new XStream(new StaxDriver());
-		xstream.autodetectAnnotations(true);
+	public void testBuild() throws InvalidConfigurationException {
 		
 		PTestPlan plan = new PTestPlan();
 		plan.setCreatedBy("mnxfst");
@@ -64,9 +67,18 @@ public class TestPTestPlan {
 		activityOpt.setClazz("test-class");
 		activityOpt.setDescription("test class description");
 		plan.addActivityConfigOption(activityOpt);
+
+		String xml = PTestPlanBuilder.export(plan);
+		Assert.assertNotNull("The result must not be null", xml);
+		Assert.assertFalse("The result must not be empty", xml.isEmpty());
 		
-		System.out.println(xstream.toXML(plan));
-		xstream.fromXML(xstream.toXML(plan));
+		PTestPlan recoveredPlan = PTestPlanBuilder.build(new ByteArrayInputStream(xml.getBytes()));
+		String recoveredPlanXml = PTestPlanBuilder.export(recoveredPlan);
+		Assert.assertEquals("The original xml and the xml of the recovered plan must be equal", xml, recoveredPlanXml);
+		// TODO write a sufficient equals method
+		
+;		
+		
 		
 		
 	}

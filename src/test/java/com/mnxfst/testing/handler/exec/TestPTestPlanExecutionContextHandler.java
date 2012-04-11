@@ -17,7 +17,7 @@
  *
  */
 
-package com.mnxfst.testing.server.handler.planexec;
+package com.mnxfst.testing.handler.exec;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -36,15 +36,17 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.mnxfst.testing.handler.exec.PTestPlanExecutionContextHandler;
+import com.mnxfst.testing.handler.exec.PTestPlanRecurrenceType;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlanActivitySettings;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlanBuilder;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlanConfigurationOption;
+import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 import com.mnxfst.testing.server.PTestServerResponseBuilder;
 import com.mnxfst.testing.server.cfg.PTestServerConfiguration;
 import com.mnxfst.testing.server.exception.ContextInitializationFailedException;
 import com.mnxfst.testing.server.exception.RequestProcessingFailedException;
-import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlan;
-import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlanActivitySettings;
-import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlanBuilder;
-import com.mnxfst.testing.server.handler.planexec.cfg.PTestPlanConfigurationOption;
-import com.mnxfst.testing.server.handler.planexec.exception.InvalidTestPlanConfigurationException;
 
 /**
  * Test case for {@link PTestPlanExecutionContextHandler}
@@ -486,7 +488,7 @@ public class TestPTestPlanExecutionContextHandler {
 	}
 
 	@Test
-	public void testProcessRequestWithTestplanHavingEmptyTestplanXMLNode() throws RequestProcessingFailedException, ContextInitializationFailedException, InvalidTestPlanConfigurationException {
+	public void testProcessRequestWithTestplanHavingEmptyTestplanXMLNode() throws RequestProcessingFailedException, ContextInitializationFailedException, InvalidConfigurationException {
 
 		TestMessageEventChannelFuture testMessageEventChannelFuture = new TestMessageEventChannelFuture();
 		TestMessageEventChannel testMessageChannel = new TestMessageEventChannel(testMessageEventChannelFuture);
@@ -516,7 +518,7 @@ public class TestPTestPlanExecutionContextHandler {
 	}
 
 	@Test
-	public void testProcessRequestWithTestplanHavingInvalidSettings() throws RequestProcessingFailedException, ContextInitializationFailedException, InvalidTestPlanConfigurationException {
+	public void testProcessRequestWithTestplanHavingInvalidSettings() throws RequestProcessingFailedException, ContextInitializationFailedException, InvalidConfigurationException {
 
 		TestMessageEventChannelFuture testMessageEventChannelFuture = new TestMessageEventChannelFuture();
 		TestMessageEventChannel testMessageChannel = new TestMessageEventChannel(testMessageEventChannelFuture);

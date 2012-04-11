@@ -17,29 +17,24 @@
  *
  */
 
-package com.mnxfst.testing.server.handler.planexec.exception;
+package com.mnxfst.testing.handler.exec;
+
+import java.io.Serializable;
 
 /**
- * Thrown in case a supposed test plan does not contain the expected information set 
+ * Names the recurrence type to use
  * @author mnxfst
- * @since 10.04.2012
+ * @since 02.04.2012
  */
-public class InvalidTestPlanConfigurationException extends Exception {
+public enum PTestPlanRecurrenceType implements Serializable {
 
-	private static final long serialVersionUID = 2850947133773091598L;
+	TIMES,
+	MILLIS,
+	SECONDS,
+	MINUTES,
+	HOURS,
+	DAYS,
+	INFINITE,
+	UNKNOWN
 
-	public InvalidTestPlanConfigurationException() {
-	}
-
-	public InvalidTestPlanConfigurationException(String msg) {
-		super(msg);
-	}
-
-	public InvalidTestPlanConfigurationException(Throwable cause) {
-		super(cause);
-	}
-
-	public InvalidTestPlanConfigurationException(String msg, Throwable cause) {
-		super(msg, cause);
-	}
 }
