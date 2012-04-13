@@ -19,6 +19,9 @@
 
 package com.mnxfst.testing.handler.exec.activity;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * Provides an abstract parent implementation to all {@link PTestPlanActivity activities}
@@ -53,6 +56,38 @@ public abstract class AbstractActivity implements PTestPlanActivity {
 		this.description = description;
 	}
     
+	/**
+	 * Extracts all variables contained in curly brackets being prefixed with a dollar sign from the given input. Sample: ${test.attr}
+	 * @param input
+	 * @return
+	 */
+	public Map<String, String> getContextVariablesFromString(String input) {
+		
+		Map<String, String> variables = new HashMap<String, String>();
+		
+		if(input != null && !input.isEmpty()) {
+			int index = 0;
+			while((index < input.length()) && (index != -1)) {
+				index = input.indexOf("${", index);
+				if(index != -1 && index < input.length()) {
+					String payloadVariable = input.substring(index, input.indexOf("}", index+1) + 1);
+					if(payloadVariable != null && !payloadVariable.isEmpty()) {
+						String pattern = new String(payloadVariable);
+						pattern = pattern.replace("$", "\\$");
+						pattern = pattern.replace("{", "\\{");
+						pattern = pattern.replace("}", "\\}");
+						
+						variables.put(payloadVariable, pattern);
+					}
+					index = index + 1;
+				}			
+			}
+		}
+		
+		return variables;
+		
+	}
+	
     /**
      * Interrupts the action
      */

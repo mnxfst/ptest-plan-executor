@@ -611,6 +611,11 @@ public class TestPTestPlanExecutionContextHandler {
 		insertSingleValue(PTestPlanExecutionContextHandler.CONTEXT_HANDLER_TESTPLAN_PARAM, xml, params);
 		handler.processRequest(new DefaultHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, "/"), params, false, testEvent);
 		
+		try {
+			Thread.sleep(100);
+		} catch(InterruptedException e) {			
+		}
+		
 		Assert.assertNotNull("The message contained within the channel future must not be null", testMessageEventChannelFuture.getMessage());
 		DefaultHttpResponse response = (DefaultHttpResponse)testMessageEventChannelFuture.getMessage();		
 		Assert.assertEquals("The status must be 200", HttpStatus.SC_OK, response.getStatus().getCode());
@@ -623,14 +628,20 @@ public class TestPTestPlanExecutionContextHandler {
 		Assert.assertTrue("The response must contain a result identifier", contents.indexOf("resultIdentifier") != -1);
 		
 		Set<String> identifiers = handler.getResponseIdentifiers();
-		Assert.assertNotNull("The identifier set must not be null", identifiers);
+		Assert.assertNotNull("The identifier set must not be null", identifiers);		
 		Assert.assertFalse("The identifier set must not be empty", identifiers.isEmpty());
 		Assert.assertEquals("The identifier set must contain one element", 1, identifiers.size());
 		
 		String id = identifiers.iterator().next();
+		Assert.assertNotNull("The identifier must not be null", id);
+		Assert.assertFalse("The identifier must not be empty", id.trim().isEmpty());
 		
-		
-		
+		PTestPlanExecutorResult result = handler.getResponse(id);
+		Assert.assertNotNull("The result must not be null", result);
+		Assert.assertEquals("The result identifier must be equal to " + id, id, result.getResultIdentifier());
+		Assert.assertEquals("The number of runs must be 1", 1, result.getNumOfRuns());
+		Assert.assertEquals("The number of threads must be 1", 1, result.getWorkerThreads());
+		Assert.assertEquals("The work queue size must be 1", 1, result.getWorkQueueSize());
 		
 	}
 
