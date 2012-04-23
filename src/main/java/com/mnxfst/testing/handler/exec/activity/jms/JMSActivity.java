@@ -19,23 +19,32 @@
 
 package com.mnxfst.testing.handler.exec.activity.jms;
 
+import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.DeliveryMode;
 import javax.jms.Destination;
+import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 import org.apache.log4j.Logger;
 
 import com.mnxfst.testing.handler.exec.PTestPlanExecutionContext;
 import com.mnxfst.testing.handler.exec.activity.AbstractActivity;
 import com.mnxfst.testing.handler.exec.exception.ActivityExecutionFailedException;
+import com.mnxfst.testing.handler.exec.exception.ContextVariableEvaluationFailedException;
 import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 
 /**
@@ -114,10 +123,16 @@ public class JMSActivity extends AbstractActivity {
 		if(providerUrl == null || providerUrl.trim().isEmpty())
 			throw new InvalidConfigurationException("Missing required provider url for activity '"+getActivityId()+"'");
 		
+		String deliveryMode = (String) configuration.get(CFG_DELIVERY_MODE);
+		if(deliveryMode == null || deliveryMode.trim().isEmpty()) 
+			throw new InvalidConfigurationException("Missing delivery mode setting for activity '"+getActivityId()+"'");
+		
+		if(!deliveryMode.trim().equalsIgnoreCase(DELIVERY_MODE_PERSISTENT) && !deliveryMode.trim().equalsIgnoreCase(DELIVERY_MODE_NON_PERSISTENT))
+			throw new InvalidConfigurationException("Unknown delivery mode ('"+deliveryMode+"') provided for activity '"+getActivityId()+"'");
+		
 		String clientId = (String)configuration.get(CFG_CLIENT_ID);		
 		String securityPrincipal = (String)configuration.get(CFG_JNDI_SECURITY_PRINCIPAL_LOOKUP_NAME);
 		String securityCredentials = (String)configuration.get(CFG_JNDI_SECURITY_CREDENTIALS_LOOKUP_NAME);
-		String deliveryMode = (String) configuration.get(CFG_DELIVERY_MODE);
 		
 		Hashtable<String, String> jndiEnvironment = new Hashtable<String, String>();
 		jndiEnvironment.put(Context.INITIAL_CONTEXT_FACTORY, connectionFactoryClass);
@@ -138,6 +153,43 @@ public class JMSActivity extends AbstractActivity {
 			}
 		}
 		
+		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+", clientId="+clientId+", deliveryMode="+deliveryMode+"]");
+		
+		try {						
+			// create the initial context using the provided settings
+			this.initialJNDIContext = new InitialContext(jndiEnvironment);
+			
+			// perform a lookup for the connection factory instance and create a new jms connection
+			this.jmsConnectionFactory = (ConnectionFactory)initialJNDIContext.lookup(connectionFactoryLookupName);
+			this.jmsConnection = this.jmsConnectionFactory.createConnection();
+			
+			// if the caller provided a valid (non-empty) client identifier, set the value
+			if(clientId != null && !clientId.isEmpty()) {
+				try {
+					this.jmsConnection.setClientID(clientId + "-" + InetAddress.getLocalHost().getHostName());
+				} catch(UnknownHostException e) {
+					logger.error("Failed to read local host name. Client identifier will not be set for JMS connection. Error: " + e.getMessage());
+				}
+			}			
+			
+			// create a new jms session, lookup the configured destination and instantiate a message producer
+			this.jmsSession = this.jmsConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+			this.jmsDestination = (Destination)initialJNDIContext.lookup(this.destinationName);
+			this.jmsMessageProducer = this.jmsSession.createProducer(this.jmsDestination);
+			
+			if(deliveryMode.equalsIgnoreCase(DELIVERY_MODE_PERSISTENT)) 			
+				this.jmsMessageProducer.setDeliveryMode(DeliveryMode.PERSISTENT);
+			else if(deliveryMode.equalsIgnoreCase(DELIVERY_MODE_NON_PERSISTENT)) 
+				this.jmsMessageProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+							
+		} catch (NamingException e) {
+			logger.error("Error while initializing the naming context. Error: " + e.getMessage(), e);
+			throw new InvalidConfigurationException("Failed to set up initial JNDI context. Error: " + e.getMessage(), e);
+		} catch (JMSException e) {
+			logger.error("Error while sending a JMS message. Error: " + e.getMessage(), e);
+			throw new InvalidConfigurationException("Failed to setup jms connection. Error: " + e.getMessage(), e);
+		}		
+		
 	}
 
 	/**
@@ -145,6 +197,41 @@ public class JMSActivity extends AbstractActivity {
 	 */
 	public void execute(int elementId, PTestPlanExecutionContext contextElement) throws ActivityExecutionFailedException {
 
+		// replace payload variables with values fetched from context
+		String payload = null;
+		try {
+			payload = new String(this.jmsMessageTemplate.getBytes(), "UTF-8");
+		} catch(UnsupportedEncodingException e) {
+			logger.error("Failed to convert jms message template into UTF-8 string. Error: " + e.getMessage());
+			throw new ActivityExecutionFailedException("Failed to convert jms message template into UTF-8 string. Error: " + e.getMessage());
+		}
+
+		// iterate through jms payload variables
+		for(String logPattern : jmsPayloadVariables.keySet()) {
+			
+			// fetch the associated log pattern / replacement pattern
+			String replacementPattern = jmsPayloadVariables.get(logPattern);
+			
+			// evaluate the pattern using the provided context information
+			Object ctxValue = null;
+			try {
+				ctxValue = contextElement.evaluate(logPattern);
+			} catch(ContextVariableEvaluationFailedException e) {
+				throw new ActivityExecutionFailedException("Failed to evaluate pattern '" + logPattern + "'. Error: " + e.getMessage());
+			}
+			
+			// if the value is not null, replace all pattern
+			if(ctxValue != null)
+				payload = payload.replaceAll(replacementPattern, Matcher.quoteReplacement(ctxValue.toString())); 			
+		}
+
+		try {
+			TextMessage jmsMessage = this.jmsSession.createTextMessage(payload.trim());
+			this.jmsMessageProducer.send(jmsMessage);
+		} catch (JMSException e) {
+			throw new ActivityExecutionFailedException("Failed to send jms message to queue/topic '"+this.destinationName+"'. Error: " + e.getMessage(), e);
+		}
+		
 	}
 
 }

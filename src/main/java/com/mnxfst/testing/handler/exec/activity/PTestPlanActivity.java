@@ -99,6 +99,11 @@ public interface PTestPlanActivity {
 	 * Interrupts the action
 	 */
 	public void interrupt();
+	
+	/**
+	 * Shuts down the activity properly
+	 */
+	public void shutdown() throws ActivityExecutionFailedException;
 
 	
 }

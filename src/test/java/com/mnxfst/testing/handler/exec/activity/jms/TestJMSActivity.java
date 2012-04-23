@@ -25,6 +25,8 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.mnxfst.testing.handler.exec.PTestPlanExecutionContext;
+import com.mnxfst.testing.handler.exec.exception.ActivityExecutionFailedException;
 import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 
 /**
@@ -178,7 +180,7 @@ public class TestJMSActivity {
 		cfg.put("credential", "sampleCredentials");
 		try {
 			new JMSActivity().configure(cfg, null);
-			Assert.fail("Missing destination name");
+			Assert.fail("Missing template name");
 		} catch(InvalidConfigurationException e) {
 			//
 		}		
@@ -198,7 +200,7 @@ public class TestJMSActivity {
 		cfg.put("credential", "sampleCredentials");
 		try {
 			new JMSActivity().configure(cfg, null);
-			Assert.fail("Missing destination name");
+			Assert.fail("Missing connection factory");
 		} catch(InvalidConfigurationException e) {
 			//
 		}		
@@ -219,7 +221,7 @@ public class TestJMSActivity {
 		cfg.put("credential", "sampleCredentials");
 		try {
 			new JMSActivity().configure(cfg, null);
-			Assert.fail("Missing destination name");
+			Assert.fail("Missing connection factory");
 		} catch(InvalidConfigurationException e) {
 			//
 		}		
@@ -240,7 +242,7 @@ public class TestJMSActivity {
 		cfg.put("credential", "sampleCredentials");
 		try {
 			new JMSActivity().configure(cfg, null);
-			Assert.fail("Missing destination name");
+			Assert.fail("Missing connection factory");
 		} catch(InvalidConfigurationException e) {
 		}		
 	}
@@ -260,7 +262,7 @@ public class TestJMSActivity {
 		cfg.put("credential", "sampleCredentials");
 		try {
 			new JMSActivity().configure(cfg, null);
-			Assert.fail("Missing destination name");
+			Assert.fail("Missing connection factory lookup name");
 		} catch(InvalidConfigurationException e) {
 		}		
 	}
@@ -280,7 +282,7 @@ public class TestJMSActivity {
 		cfg.put("credential", "sampleCredentials");
 		try {
 			new JMSActivity().configure(cfg, null);
-			Assert.fail("Missing destination name");
+			Assert.fail("Missing connection factory lookup name");
 		} catch(InvalidConfigurationException e) {
 		}		
 	}
@@ -299,7 +301,7 @@ public class TestJMSActivity {
 		cfg.put("credential", "sampleCredentials");
 		try {
 			new JMSActivity().configure(cfg, null);
-			Assert.fail("Missing destination name");
+			Assert.fail("Missing provider url");
 		} catch(InvalidConfigurationException e) {
 		}		
 	}
@@ -319,7 +321,7 @@ public class TestJMSActivity {
 		cfg.put("credential", "sampleCredentials");
 		try {
 			new JMSActivity().configure(cfg, null);
-			Assert.fail("Missing destination name");
+			Assert.fail("Missing provider url");
 		} catch(InvalidConfigurationException e) {
 		}		
 	}
@@ -339,9 +341,112 @@ public class TestJMSActivity {
 		cfg.put("credential", "sampleCredentials");
 		try {
 			new JMSActivity().configure(cfg, null);
-			Assert.fail("Missing destination name");
+			Assert.fail("Missing provider url");
 		} catch(InvalidConfigurationException e) {
 		}		
+	}
+	
+	@Test
+	public void testConfigureWithMissingDeliveryMode() throws InvalidConfigurationException {
+		
+		Map<String, String> cfg = new HashMap<String, String>();
+		cfg.put("payloadTemplate", "sampleTemplate");
+		cfg.put("destinationName", "sampleDestination");
+		cfg.put("clientId", "sampleClientId");
+		cfg.put("connectionFactoryClass", "sampleConnectionFactoryClass");
+		cfg.put("connectionFactoryLookupName", "sampleConnectionFactoryLookupName");
+		cfg.put("principal", "samplePrincipal");
+		cfg.put("credential", "sampleCredentials");
+		cfg.put("providerUrl", "sampleProviderUrl");
+		try {
+			new JMSActivity().configure(cfg, null);
+			Assert.fail("Missing provider url");
+		} catch(InvalidConfigurationException e) {
+		}		
+	}
+	
+	@Test
+	public void testConfigureWithNullDeliveryMode() throws InvalidConfigurationException {
+		Map<String, String> cfg = new HashMap<String, String>();
+		cfg.put("payloadTemplate", "sampleTemplate");
+		cfg.put("deliveryMode", null);
+		cfg.put("destinationName", "sampleDestination");
+		cfg.put("clientId", "sampleClientId");
+		cfg.put("connectionFactoryClass", "sampleConnectionFactoryClass");
+		cfg.put("connectionFactoryLookupName", "sampleConnectionFactoryLookupName");
+		cfg.put("principal", "samplePrincipal");
+		cfg.put("credential", "sampleCredentials");
+		cfg.put("providerUrl", "sampleProviderUrl");
+		try {
+			new JMSActivity().configure(cfg, null);
+			Assert.fail("Missing provider url");
+		} catch(InvalidConfigurationException e) {
+		}		
+	}
+	
+	@Test
+	public void testConfigureWithEmptyDeliveryMode() throws InvalidConfigurationException {
+		Map<String, String> cfg = new HashMap<String, String>();
+		cfg.put("payloadTemplate", "sampleTemplate");
+		cfg.put("deliveryMode", "\t\t    \n\n");
+		cfg.put("destinationName", "sampleDestination");
+		cfg.put("clientId", "sampleClientId");
+		cfg.put("connectionFactoryClass", "sampleConnectionFactoryClass");
+		cfg.put("connectionFactoryLookupName", "sampleConnectionFactoryLookupName");
+		cfg.put("principal", "samplePrincipal");
+		cfg.put("credential", "sampleCredentials");
+		cfg.put("providerUrl", "sampleProviderUrl");
+		try {
+			new JMSActivity().configure(cfg, null);
+			Assert.fail("Missing provider url");
+		} catch(InvalidConfigurationException e) {
+		}		
+	}
+	
+	@Test
+	public void testConfigureWithInvalidDeliveryMode() throws InvalidConfigurationException {
+		Map<String, String> cfg = new HashMap<String, String>();
+		cfg.put("payloadTemplate", "sampleTemplate");
+		cfg.put("deliveryMode", "testMode");
+		cfg.put("destinationName", "sampleDestination");
+		cfg.put("clientId", "sampleClientId");
+		cfg.put("connectionFactoryClass", "sampleConnectionFactoryClass");
+		cfg.put("connectionFactoryLookupName", "sampleConnectionFactoryLookupName");
+		cfg.put("principal", "samplePrincipal");
+		cfg.put("credential", "sampleCredentials");
+		cfg.put("providerUrl", "sampleProviderUrl");
+		try {
+			new JMSActivity().configure(cfg, null);
+			Assert.fail("Missing provider url");
+		} catch(InvalidConfigurationException e) {
+		}		
+	}
+	
+	public void testConfigureWithValidConfiguration() throws InvalidConfigurationException, ActivityExecutionFailedException {
+		Map<String, String> cfg = new HashMap<String, String>();
+		cfg.put("payloadTemplate", "sampleTemplate");
+		cfg.put("deliveryMode", "non_persistent");
+		cfg.put("destinationName", "testTopic");
+		cfg.put("vendor.config.topic.testTopic", "test.topic");
+		cfg.put("clientId", "sampleClientId");
+		cfg.put("connectionFactoryClass", "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
+		cfg.put("connectionFactoryLookupName", "ConnectionFactory");
+		cfg.put("principal", "");
+		cfg.put("credential", "");
+		cfg.put("providerUrl", "tcp://localhost:61616");
+		JMSActivity activity = new JMSActivity();
+		activity.configure(cfg, null);
+		
+		PTestPlanExecutionContext ctx = new PTestPlanExecutionContext();
+		long start = System.currentTimeMillis();
+		int msgCount = 0;
+		while(System.currentTimeMillis() - start < 2000) {
+			activity.execute(1, ctx);
+			msgCount = msgCount + 1;
+		}
+		
+		System.out.println(msgCount / 2000 + " messages per millis. Per second: " + (msgCount / 2000)*1000);
+			
 	}
 	
 	

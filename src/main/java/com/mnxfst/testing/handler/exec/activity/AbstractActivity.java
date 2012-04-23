@@ -22,6 +22,8 @@ package com.mnxfst.testing.handler.exec.activity;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.mnxfst.testing.handler.exec.exception.ActivityExecutionFailedException;
+
 
 /**
  * Provides an abstract parent implementation to all {@link PTestPlanActivity activities}
@@ -94,6 +96,12 @@ public abstract class AbstractActivity implements PTestPlanActivity {
     public void interrupt() {
     	this.running = false;
     }
+
+	/**
+	 * @see com.mnxfst.testing.handler.exec.activity.PTestPlanActivity#shutdown()
+	 */
+	public void shutdown() throws ActivityExecutionFailedException {
+	}
 
 	/**
 	 * @return the activityType
