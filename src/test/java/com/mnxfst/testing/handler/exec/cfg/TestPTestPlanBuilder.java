@@ -80,7 +80,7 @@ public class TestPTestPlanBuilder {
 		
 	}
 	
-	@Test
+	
 	public void testBuild1() throws InvalidConfigurationException, FileNotFoundException {
 		
 		PTestPlan plan = PTestPlanBuilder.build(new FileInputStream("src/test/resources/plan/jms-sample-plan.xml"));
