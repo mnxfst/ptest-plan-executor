@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<ptestplan>
+	<name>my-jms-sample-plan</name>
+	<description>simple jms plan</description>
+	<creationDate>2012-05-07</creationDate>
+	<createdBy>mnxfst</createdBy>
+
+	<activities>
+		<activity id="INIT">
+			<description>jms activity</description>
+			<class>com.mnxfst.testing.handler.exec.activity.jms.JMSActivity</class>
+			<configuration>
+				<options>
+					<entry>
+						<string>payloadTemplate</string>
+						<string><![CDATA[<pub:PublishProductRequest xmlns:pub="http://b2c.otto.de/schema/publishProduct"><pub:sourceParameter><pub:Id>${global.scenarioId}-${global.productId}-${global.runId}-${global.threads}-${global.waitTime}-${run.requestId}</pub:Id><pub:orderingSystem>Internet</pub:orderingSystem><pub:domainSign>${run.domainSign}</pub:domainSign></pub:sourceParameter><pub:path>//localhost</pub:path><pub:keywords><pub:keyword>Hose</pub:keyword><pub:keyword>lang</pub:keyword></pub:keywords><pub:title>die lange Hose${run.randomInt}</pub:title><pub:descriptionShort>elegante Hose</pub:descriptionShort><pub:descriptionLong>die elegante Hose</pub:descriptionLong><pub:brand>Levis</pub:brand><pub:materialGroup>stoff</pub:materialGroup><pub:categoryList><pub:category>Kleidung</pub:category><pub:category>Mann</pub:category></pub:categoryList><pub:characteristicList><pub:map><pub:value>hose</pub:value><pub:value>fällt klein aus${run.randomInt}</pub:value></pub:map></pub:characteristicList><pub:mediaList><pub:media><pub:media>Video</pub:media></pub:media></pub:mediaList><pub:constraints><pub:map><pub:value>Lieferservice gleich ${run.randomInt} Wochen</pub:value></pub:map></pub:constraints><pub:aktionen><pub:map><pub:value>bekannt aus tv</pub:value></pub:map></pub:aktionen><pub:onlineFrom>2001-10-26T21:32:52</pub:onlineFrom><pub:onlineTo>2010-10-26T21:32:52</pub:onlineTo></pub:PublishProductRequest>]]></string>
+					</entry>
+					<entry>
+						<string>deliveryMode</string>
+						<string>non_persistent</string>
+					</entry>
+					<entry>
+						<string>destinationName</string>
+						<string>testTopic</string>
+					</entry>
+					<entry>
+						<string>vendor.config.topic.testTopic</string>
+						<string>test.topic</string>
+					</entry>
+					<entry>
+						<string>clientId</string>
+						<string>sampleClientId-123</string>
+					</entry>
+					<entry>
+						<string>connectionFactoryClass</string>
+						<string>org.apache.activemq.jndi.ActiveMQInitialContextFactory</string>
+					</entry>
+					<entry>
+						<string>connectionFactoryLookupName</string>
+						<string>ConnectionFactory</string>
+					</entry>
+					<entry>
+						<string>providerUrl</string>
+						<string>tcp://localhost:61616</string>
+					</entry>
+				</options>
+			</configuration>
+			<exportVariables>
+				<entry>
+					<string>jmsPayload</string>
+					<string>samplePayload</string>
+				</entry>
+				<entry>
+					<string>jmsException</string>
+					<string>jmsException</string>
+				</entry>
+			</exportVariables>
+			<nextActivity>FINAL</nextActivity>
+		</activity>
+		<activity id="FINAL">
+			<description>log4j activity</description>
+			<class>com.mnxfst.testing.handler.exec.activity.log.Log4jActivity</class>
+			<configuration>
+				<options>
+					<entry>
+						<string>logTemplate</string>
+						<string>${samplePayload}</string>
+					</entry>
+				</options>
+			</configuration>
+		</activity>
+	</activities>
+</ptestplan>

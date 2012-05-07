@@ -221,5 +221,6 @@ public class TestPTestPlanProcessor {
 		Assert.assertEquals("The current state attribute value must be '"+PTestPlanProcessor.FINAL_STATE+"'", PTestPlanProcessor.FINAL_STATE, ctx.getCurrentActivityId());
 		Assert.assertEquals("The value of context attribute '"+TestDummyActivity.DUMMY_CONTEXT_VARIABLE+"' must be 'junit-test-value'", "junit-test-value", ctx.getContextVariable(TestDummyActivity.DUMMY_CONTEXT_VARIABLE));
 	}
+	
 }
 

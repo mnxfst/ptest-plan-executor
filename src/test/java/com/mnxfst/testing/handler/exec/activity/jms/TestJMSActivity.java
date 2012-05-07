@@ -422,6 +422,7 @@ public class TestJMSActivity {
 		}		
 	}
 	
+	
 	public void testConfigureWithValidConfiguration() throws InvalidConfigurationException, ActivityExecutionFailedException {
 		Map<String, String> cfg = new HashMap<String, String>();
 		cfg.put("payloadTemplate", "sampleTemplate");
@@ -440,12 +441,13 @@ public class TestJMSActivity {
 		PTestPlanExecutionContext ctx = new PTestPlanExecutionContext();
 		long start = System.currentTimeMillis();
 		int msgCount = 0;
-		while(System.currentTimeMillis() - start < 2000) {
+		int millis = 8000;
+		while(System.currentTimeMillis() - start < millis) {
 			activity.execute(1, ctx);
 			msgCount = msgCount + 1;
 		}
 		
-		System.out.println(msgCount / 2000 + " messages per millis. Per second: " + (msgCount / 2000)*1000);
+		System.out.println(msgCount / millis + " messages per millis. Per second: " + (msgCount / millis)*1000);
 			
 	}
 	

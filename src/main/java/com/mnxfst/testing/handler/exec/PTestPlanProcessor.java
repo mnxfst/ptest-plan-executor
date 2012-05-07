@@ -94,7 +94,7 @@ public class PTestPlanProcessor implements Callable<PTestPlanExecutionContext> {
 		element.setInitTimestamp(System.currentTimeMillis());
 		// keeps track of the states already visited
 		Set<String> statesAlreadyVisited = new HashSet<String>();
-				
+
 		// keep on going until the next state attribute references the final state
 		while(element.getNextActivityId() != null) {
 

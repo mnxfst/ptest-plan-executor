@@ -19,16 +19,17 @@
 
 package com.mnxfst.testing.handler.exec.cfg;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.kahadb.util.ByteArrayInputStream;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
-import com.mnxfst.testing.handler.exec.cfg.PTestPlanActivitySettings;
-import com.mnxfst.testing.handler.exec.cfg.PTestPlanBuilder;
-import com.mnxfst.testing.handler.exec.cfg.PTestPlanConfigurationOption;
+import com.mnxfst.testing.handler.exec.PTestPlanExecutor;
 import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 
 /**
@@ -77,7 +78,28 @@ public class TestPTestPlanBuilder {
 		// TODO write a sufficient equals method
 		System.out.println(recoveredPlanXml);
 		
+	}
+	
+	@Test
+	public void testBuild1() throws InvalidConfigurationException, FileNotFoundException {
 		
+		PTestPlan plan = PTestPlanBuilder.build(new FileInputStream("src/test/resources/plan/jms-sample-plan.xml"));
+		String recoveredPlanXml = PTestPlanBuilder.export(plan);
+		System.out.println(recoveredPlanXml);
+		
+				
+		ExecutorService testPlanExecutorService = Executors.newCachedThreadPool();
+		
+		PTestPlanExecutor executor = new PTestPlanExecutor(plan, "id", 300000, 300000, 64);
+		testPlanExecutorService.execute(executor);
+
+		try {
+			Thread.sleep(50000);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+
 	}
 	
 }

@@ -73,7 +73,7 @@ public class JMSActivity extends AbstractActivity {
 
 	public static final String CFG_EXP_VAR_PAYLOAD = "jmsPayload";
 	public static final String CFG_EXP_VAR_EXCEPTION = "jmsException";
-		
+			
 	/** destination name, eg. myTopic or myQueue */
 	private String destinationName = null;
 	/** jndi context */
@@ -91,7 +91,14 @@ public class JMSActivity extends AbstractActivity {
 	/** payload template */
 	private String jmsMessageTemplate = null;
 	/** holds the identified payload variables */
-	private Map<String, String> jmsPayloadVariables = new HashMap<String, String>();
+	private Map<String, String> jmsPayloadVariables = new HashMap<String, String>();	
+	/** holds the context variable name to be used for exporting the jms payload */
+	private String jmsPayloadExportVariable = null;
+	/** holds the context variable name to be used for exporting any jms exception */
+	private String jmsExceptionExportVariable = null;
+	
+	private boolean exportPayload = false;
+	private boolean exportException = false;
 	
 	/**
 	 * @see com.mnxfst.testing.handler.exec.activity.PTestPlanActivity#configure(java.util.Map, java.util.Map)
@@ -153,7 +160,12 @@ public class JMSActivity extends AbstractActivity {
 			}
 		}
 		
-		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+", clientId="+clientId+", deliveryMode="+deliveryMode+"]");
+		this.jmsPayloadExportVariable = exportVariables.get(CFG_EXP_VAR_PAYLOAD);
+		this.exportPayload = (this.jmsPayloadExportVariable != null && !this.jmsPayloadExportVariable.trim().isEmpty());
+		this.jmsExceptionExportVariable = exportVariables.get(CFG_EXP_VAR_EXCEPTION);
+		this.exportException = (this.jmsExceptionExportVariable != null && !this.jmsExceptionExportVariable.trim().isEmpty());
+		
+		logger.info("jms-activity[initialCtxFactory="+connectionFactoryClass+", ctxFactoryLookupName="+connectionFactoryLookupName+", brokerUrl="+providerUrl+", principal="+securityPrincipal+", credentials="+securityCredentials+", destination="+destinationName + additionalJndiProps.toString()+", clientId="+clientId+", deliveryMode="+deliveryMode+", exportPayload="+exportPayload+", exportException="+exportException+"]");
 		
 		try {						
 			// create the initial context using the provided settings
@@ -188,7 +200,7 @@ public class JMSActivity extends AbstractActivity {
 		} catch (JMSException e) {
 			logger.error("Error while sending a JMS message. Error: " + e.getMessage(), e);
 			throw new InvalidConfigurationException("Failed to setup jms connection. Error: " + e.getMessage(), e);
-		}		
+		}
 		
 	}
 
@@ -222,15 +234,23 @@ public class JMSActivity extends AbstractActivity {
 			
 			// if the value is not null, replace all pattern
 			if(ctxValue != null)
-				payload = payload.replaceAll(replacementPattern, Matcher.quoteReplacement(ctxValue.toString())); 			
+				payload = payload.replaceAll(replacementPattern, Matcher.quoteReplacement(ctxValue.toString()));
 		}
 
 		try {
 			TextMessage jmsMessage = this.jmsSession.createTextMessage(payload.trim());
 			this.jmsMessageProducer.send(jmsMessage);
+			contextElement.setNextActivityId(getNextActivityId());
+			
+			if(exportPayload)
+				contextElement.addContextVariable(jmsPayloadExportVariable, payload);
 		} catch (JMSException e) {
+			if(exportException)
+				contextElement.addContextVariable(jmsExceptionExportVariable, e.getMessage());
 			throw new ActivityExecutionFailedException("Failed to send jms message to queue/topic '"+this.destinationName+"'. Error: " + e.getMessage(), e);
 		}
+		
+		
 		
 	}
 

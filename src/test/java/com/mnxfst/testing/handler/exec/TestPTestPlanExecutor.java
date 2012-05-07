@@ -19,15 +19,20 @@
 
 package com.mnxfst.testing.handler.exec;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlanActivitySettings;
+import com.mnxfst.testing.handler.exec.cfg.PTestPlanBuilder;
 import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 
 /**
@@ -503,4 +508,19 @@ public class TestPTestPlanExecutor {
 		Collections.sort(runtimes);
 		Assert.assertEquals("The total runtime must be 137", 137, executor.getTotalRuntime(runtimes));
 	}
+	
+	@Test
+	public void testRunJMSSample() throws InvalidConfigurationException, FileNotFoundException {
+		try {
+			ExecutorService testPlanExecutorService = Executors.newCachedThreadPool();
+			PTestPlan plan = PTestPlanBuilder.build(new FileInputStream("src/test/resources/plan/jms-sample-plan.xml"));
+			PTestPlanExecutor executor = new PTestPlanExecutor(plan, "id", 2000, 2000, 8);
+			testPlanExecutorService.execute(executor);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
 }

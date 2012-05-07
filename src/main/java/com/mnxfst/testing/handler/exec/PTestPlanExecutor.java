@@ -205,6 +205,8 @@ public class PTestPlanExecutor implements Runnable {
 		Collections.sort(runtimes);
 
 		PTestPlanExecutorResult result = new PTestPlanExecutorResult(resultIdentifier, testPlanConfiguration.getName(), getTotalRuntime(runtimes), getMinRuntime(runtimes), getMaxRuntime(runtimes), getAverageRuntime(runtimes), getMedianRuntime(runtimes), numOfRuns, workQueueSize, workerThreads);
+		
+		System.out.println(result.toString());
 		PTestPlanExecutionContextHandler.addResponse(resultIdentifier, result);
 	}
 	
