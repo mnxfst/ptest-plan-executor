@@ -47,6 +47,8 @@ import org.jboss.netty.util.internal.ConcurrentHashMap;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlanBuilder;
 import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
+import com.mnxfst.testing.handler.exec.response.PTestPlanExecutionStartedResponse;
+import com.mnxfst.testing.handler.exec.response.PTestPlanExecutorResponseBuilder;
 import com.mnxfst.testing.server.PTestServerContextRequestHandler;
 import com.mnxfst.testing.server.cfg.PTestServerConfiguration;
 import com.mnxfst.testing.server.exception.ContextInitializationFailedException;
@@ -61,8 +63,6 @@ import com.mnxfst.testing.server.exception.RequestProcessingFailedException;
 public class PTestPlanExecutionContextHandler implements PTestServerContextRequestHandler {
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////
-
-	public static final String TEST_PLAN_EXEC_HANDLER_CONTEXT_PATH = "/testplan";
 	
 	// action parameter name and available values
 	public static final String CONTEXT_HANDLER_ACTION_PARAM = "action";
@@ -77,7 +77,7 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 	public static final String CONTEXT_HANDLER_TESTPLAN_PARAM = "testplan";
 	
 	// parameters required to collect results
-	public static final String CONTEXT_HANDLER_RESPONSE_IDENTIFIER_PARAM = "responseIdentifier";	
+	public static final String CONTEXT_HANDLER_RESULT_IDENTIFIER_PARAM = "resultIdentifier";	
 
 	// general response codes
 	public static final int RESPONSE_CODE_EXECUTION_STARTED = 1;
@@ -94,6 +94,8 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 	public static final String ERROR_CODE_TESTPLAN_PROCESSING_ERROR = "testplan_processing_error";
 	public static final String ERROR_CODE_TESTPLAN_PARSING_FAILED = "testplan_parsing_failed";
 	public static final String ERROR_CODE_RESULT_ID_MISSING = "result_identifier_missing";
+	public static final String ERROR_CODE_RESULT_ID_INVALID = "result_identifier_invalid";
+	public static final String ERROR_CODE_ACTION_TYPE_MISSING_OR_INVALID = "action_type_missing_or_invalid";
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -145,88 +147,143 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 		
 		int errors = 0;		
 		
-		// parse out and validate number of threads
-		boolean threadsValid = true;
-		Integer numOfThreads = parseSingleIntValue(requestParameters.get(CONTEXT_HANDLER_NUM_OF_THREADS_PARAM));
-		if(numOfThreads == null || numOfThreads.intValue() < 1) {
+		boolean actionTypeValid = true;
+		String action = parseSingleStringValue(requestParameters.get(CONTEXT_HANDLER_ACTION_PARAM));
+		if(action == null || action.trim().isEmpty()) {
 			errors = errors + 1;
-			threadsValid = false;
-		}		
-		
-		// parse out and validate number of recurrences
-		boolean recurrencesValid = true;
-		Integer numOfRecurrences = parseSingleIntValue(requestParameters.get(CONTEXT_HANDLER_NUM_OF_RECURRENCES_PARAM));
-		if(numOfRecurrences == null || numOfRecurrences.intValue() < 1) {
-			errors = errors + 1;
-			recurrencesValid = false;
-		}		
-		
-		// parse out and validate the recurrence type
-		boolean recurrencesTypeValid = true;
-		PTestPlanRecurrenceType recurrenceType = parseSingleRecurrenceType(requestParameters.get(CONTEXT_HANDLER_RECURRENCE_TYPE_PARAM));
-		if(recurrenceType == null || recurrenceType == PTestPlanRecurrenceType.UNKNOWN) {
-			errors = errors + 1;
-			recurrencesTypeValid = false;
-		}		
-		
-		// parse out and validate the testplan to execute
-		boolean testPlanValid = true;
-		List<String> values = requestParameters.get(CONTEXT_HANDLER_TESTPLAN_PARAM);
-		String testPlan = (values != null && values.size() > 0 ? values.get(0): null);
-		if(testPlan == null || testPlan.trim().isEmpty()) {
-			errors = errors + 1;
-			testPlanValid = false;
+			actionTypeValid = false;
 		}
 		
-		// write all request parameters having one value into a key/value map which is going to be forwarded to each test plan instance as global variables
-		Map<String, Serializable> accessableTestplanVariables = new HashMap<String, Serializable>();
-		for(String paramName : requestParameters.keySet()) {
-			List<String> additionalValues = requestParameters.get(paramName);
-			if(additionalValues != null && !additionalValues.isEmpty()) {
-				accessableTestplanVariables.put(paramName, additionalValues.get(0));
+		if(action.equalsIgnoreCase(CONTEXT_HANDLER_EXECUTE_ACTION_PARAM_VALUE)) {
+			// parse out and validate number of threads
+			boolean threadsValid = true;
+			Integer numOfThreads = parseSingleIntValue(requestParameters.get(CONTEXT_HANDLER_NUM_OF_THREADS_PARAM));
+			if(numOfThreads == null || numOfThreads.intValue() < 1) {
+				errors = errors + 1;
+				threadsValid = false;
+			}		
+			
+			// parse out and validate number of recurrences
+			boolean recurrencesValid = true;
+			Integer numOfRecurrences = parseSingleIntValue(requestParameters.get(CONTEXT_HANDLER_NUM_OF_RECURRENCES_PARAM));
+			if(numOfRecurrences == null || numOfRecurrences.intValue() < 1) {
+				errors = errors + 1;
+				recurrencesValid = false;
+			}		
+			
+			// parse out and validate the recurrence type
+			boolean recurrencesTypeValid = true;
+			PTestPlanRecurrenceType recurrenceType = parseSingleRecurrenceType(requestParameters.get(CONTEXT_HANDLER_RECURRENCE_TYPE_PARAM));
+			if(recurrenceType == null || recurrenceType == PTestPlanRecurrenceType.UNKNOWN) {
+				errors = errors + 1;
+				recurrencesTypeValid = false;
+			}		
+			
+			// parse out and validate the testplan to execute
+			boolean testPlanValid = true;
+			List<String> values = requestParameters.get(CONTEXT_HANDLER_TESTPLAN_PARAM);
+			String testPlan = (values != null && values.size() > 0 ? values.get(0): null);
+			if(testPlan == null || testPlan.trim().isEmpty()) {
+				errors = errors + 1;
+				testPlanValid = false;
 			}
-		}
+			
+			// write all request parameters having one value into a key/value map which is going to be forwarded to each test plan instance as global variables
+			Map<String, Serializable> accessableTestplanVariables = new HashMap<String, Serializable>();
+			for(String paramName : requestParameters.keySet()) {
+				List<String> additionalValues = requestParameters.get(paramName);
+				if(additionalValues != null && !additionalValues.isEmpty()) {
+					accessableTestplanVariables.put(paramName, additionalValues.get(0));
+				}
+			}
+		
+			// handle errors first
+			if(errors > 0) {
 	
-		// handle errors first
-		if(errors > 0) {
-
-			// build a map containing the error keys as well as short messages
-			Map<String, String> errorMessages = new HashMap<String, String>();
-
-			if(!threadsValid) {
-				errorMessages.put(ERROR_CODE_THREADS_MISSING_OR_INVALID, "Missing or invalid number of threads");
-			}
-			if(!recurrencesValid) {
-				errorMessages.put(ERROR_CODE_RECURRENCES_MISSING_OR_INVALID, "Missing or invalid number of recurrences");
-			}
-			if(!recurrencesTypeValid) {
-				errorMessages.put(ERROR_CODE_RECURRENCE_TYPE_MISSING_OR_INVALID, "Missing or invalid recurrence type");
-			}
-			if(!testPlanValid) {
-				errorMessages.put(ERROR_CODE_TESTPLAN_MISSING, "Missing required testplan");
-			}
-			
-			sendResponse(PTestPlanExecutionResponseBuilder.buildErrorResponse(hostname, port, errorMessages), keepAlive, event);
-		} else {
-
-			Map<String, String> errorMessages = new HashMap<String, String>();
-			UUID resultIdentifier = UUID.fromString(new com.eaio.uuid.UUID().toString());
-			
-			try {
-				PTestPlan plan = PTestPlanBuilder.build(new ByteArrayInputStream(testPlan.getBytes("UTF-8")));
-				testPlanExecutorService.execute(new PTestPlanExecutor(plan, resultIdentifier.toString(), numOfRecurrences.intValue(), numOfRecurrences.intValue(), numOfThreads));
-			} catch (UnsupportedEncodingException e) {
-				errorMessages.put(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan. Error: " + e.getMessage());
-			} catch (InvalidConfigurationException e) {
-				errorMessages.put(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan. Error: " + e.getMessage());
-			}
-			
-			if(errorMessages != null && !errorMessages.isEmpty()) {
-				sendResponse(PTestPlanExecutionResponseBuilder.buildErrorResponse(hostname, port, errorMessages), keepAlive, event);
+				// build a map containing the error keys as well as short messages
+				PTestPlanExecutionStartedResponse response = new PTestPlanExecutionStartedResponse(hostname, port, PTestPlanExecutionStartedResponse.RESPONSE_ERROR);
+	
+				if(!threadsValid) {
+					response.addError(ERROR_CODE_THREADS_MISSING_OR_INVALID, "Missing or invalid number of threads");
+				}
+				if(!recurrencesValid) {
+					response.addError(ERROR_CODE_RECURRENCES_MISSING_OR_INVALID, "Missing or invalid number of recurrences");
+				}
+				if(!recurrencesTypeValid) {
+					response.addError(ERROR_CODE_RECURRENCE_TYPE_MISSING_OR_INVALID, "Missing or invalid recurrence type");
+				}
+				if(!testPlanValid) {
+					response.addError(ERROR_CODE_TESTPLAN_MISSING, "Missing required testplan");
+				}
+				
+				try {
+					sendResponse(PTestPlanExecutorResponseBuilder.export(response), keepAlive, event);
+				} catch (InvalidConfigurationException e) {
+					throw new RequestProcessingFailedException("Failed to create response for incoming request");
+				}
 			} else {
-				sendResponse(PTestPlanExecutionResponseBuilder.buildTestExecutionStartedResponse(hostname, port, resultIdentifier.toString()), keepAlive, event);
+	
+				PTestPlanExecutionStartedResponse response = new PTestPlanExecutionStartedResponse(hostname, port, PTestPlanExecutionStartedResponse.RESPONSE_OK);
+				UUID resultIdentifier = UUID.fromString(new com.eaio.uuid.UUID().toString());
+				
+				try {
+					PTestPlan plan = PTestPlanBuilder.build(new ByteArrayInputStream(testPlan.getBytes("UTF-8")));
+					testPlanExecutorService.execute(new PTestPlanExecutor(plan, resultIdentifier.toString(), numOfRecurrences.intValue(), numOfRecurrences.intValue(), numOfThreads));
+					response.setResultIdentifier(resultIdentifier.toString());
+				} catch (UnsupportedEncodingException e) {
+					response.setResponseCode(PTestPlanExecutionStartedResponse.RESPONSE_ERROR);
+					response.addError(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan due to an unsupported encoding. Error: " + e.getMessage());				
+				} catch (InvalidConfigurationException e) {
+					response.setResponseCode(PTestPlanExecutionStartedResponse.RESPONSE_ERROR);
+					response.addError(ERROR_CODE_TESTPLAN_PARSING_FAILED, "Failed to parse provided test plan due to an invalid configuration. Error: " + e.getMessage());
+				}
+	
+				try {
+					sendResponse(PTestPlanExecutorResponseBuilder.export(response), keepAlive, event);
+				} catch (InvalidConfigurationException e) {
+					throw new RequestProcessingFailedException("Failed to create response for incoming request");
+				}				
 			}
+		} else if(action.equalsIgnoreCase(CONTEXT_HANDLER_COLLECT_ACTION_PARAM_VALUE)) {
 			
+			PTestPlanExecutionStartedResponse response = new PTestPlanExecutionStartedResponse(hostname, port, PTestPlanExecutionStartedResponse.RESPONSE_OK);
+
+			String resultIdentifier = parseSingleStringValue(requestParameters.get(CONTEXT_HANDLER_RESULT_IDENTIFIER_PARAM));
+			if(resultIdentifier == null || resultIdentifier.trim().isEmpty()) {
+				response.setResponseCode(PTestPlanExecutionStartedResponse.RESPONSE_ERROR);
+				response.addError(ERROR_CODE_RESULT_ID_MISSING, "Missing required result identifier");
+			} else {
+				PTestPlanExecutorResult result = testPlanExecutionResultCache.get(resultIdentifier);
+				if(result == null) {
+					response.setResponseCode(PTestPlanExecutionStartedResponse.RESPONSE_ERROR);
+					response.addError(ERROR_CODE_RESULT_ID_INVALID, "Invalid result identifier '"+resultIdentifier+"'");
+				} else {					
+					response.setAverageRuntime(result.getAverageRuntime());
+					response.setMaxRuntime(result.getMaxRuntime());
+					response.setMedianRuntime(result.getMedianRuntime());
+					response.setMinRuntime(result.getMinRuntime());
+					response.setNumOfRuns(result.getNumOfRuns());
+					response.setResultIdentifier(resultIdentifier);
+					response.setTestplan(result.getTestplanName());
+					response.setTotalRuntime(result.getTotalRuntime());
+					response.setWorkerThreads(Long.valueOf(result.getWorkerThreads()));
+					response.setWorkQueueSize(Long.valueOf(result.getWorkQueueSize()));					
+				}
+			}
+			try {
+				sendResponse(PTestPlanExecutorResponseBuilder.export(response), keepAlive, event);
+			} catch (InvalidConfigurationException e) {
+				throw new RequestProcessingFailedException("Failed to create response for incoming request");
+			}				
+
+		} else {
+			PTestPlanExecutionStartedResponse response = new PTestPlanExecutionStartedResponse(hostname, port, PTestPlanExecutionStartedResponse.RESPONSE_ERROR);
+			response.addError(ERROR_CODE_ACTION_TYPE_MISSING_OR_INVALID, "Missing or invalid action type '"+action+"'");
+			try {
+				sendResponse(PTestPlanExecutorResponseBuilder.export(response), keepAlive, event);
+			} catch (InvalidConfigurationException e) {
+				throw new RequestProcessingFailedException("Failed to create response for incoming request");
+			}				
 		}
 		
 	}
@@ -286,7 +343,19 @@ public class PTestPlanExecutionContextHandler implements PTestServerContextReque
 		
 		return null;
 	}
-	
+
+	/** 
+	 * Parses out a single string value from the provided list of values.
+	 * @param values
+	 * @return
+	 */
+	protected String parseSingleStringValue(List<String> values) {
+		
+		if(values == null)
+			return null;
+		
+		return values.get(0);
+	}
 	
 	/**
 	 * Sends a response containing the given message to the calling client

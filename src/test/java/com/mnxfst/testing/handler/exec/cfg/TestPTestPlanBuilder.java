@@ -90,11 +90,11 @@ public class TestPTestPlanBuilder {
 				
 		ExecutorService testPlanExecutorService = Executors.newCachedThreadPool();
 		
-		PTestPlanExecutor executor = new PTestPlanExecutor(plan, "id", 300000, 300000, 64);
+		PTestPlanExecutor executor = new PTestPlanExecutor(plan, "id", 500000, 300000, 64);
 		testPlanExecutorService.execute(executor);
 
 		try {
-			Thread.sleep(50000);
+			Thread.sleep(100000);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

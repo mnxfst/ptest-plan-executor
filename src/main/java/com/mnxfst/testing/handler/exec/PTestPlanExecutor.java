@@ -38,6 +38,7 @@ import com.mnxfst.testing.handler.exec.activity.PTestPlanActivity;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlan;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlanActivitySettings;
 import com.mnxfst.testing.handler.exec.cfg.PTestPlanConfigurationOption;
+import com.mnxfst.testing.handler.exec.exception.ActivityExecutionFailedException;
 import com.mnxfst.testing.handler.exec.exception.InvalidConfigurationException;
 
 /**
@@ -206,8 +207,15 @@ public class PTestPlanExecutor implements Runnable {
 
 		PTestPlanExecutorResult result = new PTestPlanExecutorResult(resultIdentifier, testPlanConfiguration.getName(), getTotalRuntime(runtimes), getMinRuntime(runtimes), getMaxRuntime(runtimes), getAverageRuntime(runtimes), getMedianRuntime(runtimes), numOfRuns, workQueueSize, workerThreads);
 		
-		System.out.println(result.toString());
 		PTestPlanExecutionContextHandler.addResponse(resultIdentifier, result);
+		
+		for(PTestPlanActivity activity : activities.values()) {
+			try {
+				activity.shutdown();
+			} catch(ActivityExecutionFailedException e) {
+				logger.error("Failed to shutdown activity '"+activity.getActivityId()+"'");
+			}
+		}
 	}
 	
 	///////////////////////////////// UTILITY METHODS FOR CALCULATING REQUIRED RESULT INFORMATION /////////////////////////////////

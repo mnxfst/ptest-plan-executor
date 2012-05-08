@@ -205,6 +205,26 @@ public class JMSActivity extends AbstractActivity {
 	}
 
 	/**
+	 * @see com.mnxfst.testing.handler.exec.activity.AbstractActivity#shutdown()
+	 */
+	public void shutdown() throws ActivityExecutionFailedException {
+		try {
+			if(this.jmsSession.getTransacted())
+				this.jmsSession.commit();
+			this.jmsSession.close();
+		} catch(JMSException e) {
+			logger.error("Failed to commit JMS session. Error: " + e.getMessage(), e);
+		}
+		try {
+			this.jmsConnection.close();
+		} catch(JMSException e) {
+			throw new ActivityExecutionFailedException("Failed to close JMS connection. Error: " + e.getMessage(), e);
+		}
+	}
+
+
+
+	/**
 	 * @see com.mnxfst.testing.handler.exec.activity.PTestPlanActivity#execute(int, com.mnxfst.testing.handler.exec.PTestPlanExecutionContext)
 	 */
 	public void execute(int elementId, PTestPlanExecutionContext contextElement) throws ActivityExecutionFailedException {
@@ -248,10 +268,7 @@ public class JMSActivity extends AbstractActivity {
 			if(exportException)
 				contextElement.addContextVariable(jmsExceptionExportVariable, e.getMessage());
 			throw new ActivityExecutionFailedException("Failed to send jms message to queue/topic '"+this.destinationName+"'. Error: " + e.getMessage(), e);
-		}
-		
-		
-		
+		}		
 	}
 
 }
